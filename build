@@ -8,8 +8,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Configuration
 IMAGE_NAME="ocd:latest"
 
-# Build the image
+# Get current user's UID and GID
+USER_UID="$(id -u)"
+USER_GID="$(id -g)"
+
+# Build the image with host user's UID/GID
 echo "Building Docker image: ${IMAGE_NAME}"
-docker build -t "${IMAGE_NAME}" "${SCRIPT_DIR}"
+echo "Using UID=${USER_UID}, GID=${USER_GID}"
+docker build \
+    --build-arg UID="${USER_UID}" \
+    --build-arg GID="${USER_GID}" \
+    -t "${IMAGE_NAME}" \
+    "${SCRIPT_DIR}"
 
 echo "Build completed successfully!"
