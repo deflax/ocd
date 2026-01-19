@@ -23,6 +23,15 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
    ```
    This will start the container with your current directory mounted as the workspace.
 
+3. **Run from any directory (optional):**
+   
+   Create a symlink to run `ocd` from anywhere:
+   ```bash
+   ln -s "$(pwd)/ocd" ~/.local/bin/ocd
+   ```
+   
+   Make sure `~/.local/bin` is in your PATH. Then you can run `ocd` from any project directory.
+
 ## Configuration
 
 - Set your API key via the `OPENCODE_API_KEY` environment variable
@@ -48,9 +57,11 @@ The `ocd` script:
 - Attaches to an existing container if one is already running
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
-## Model Configuration
+## Self-Hosted Model Configuration
 
-To create a custom Ollama model with an increased context window:
+When using self-hosted models via Ollama, you may need to increase the context window size. The default context window (typically 2048-4096 tokens) is often too small for coding tasks that require analyzing multiple files or large codebases.
+
+**Creating a model with a larger context window:**
 
 ```bash
 $ ollama run qwen3:8b
@@ -60,3 +71,10 @@ Set parameter 'num_ctx' to '16384'
 Created new model 'qwen3:8b-16k'
 >>> /bye
 ```
+
+**Recommended context window sizes:**
+- `8192` - Suitable for small projects and single-file tasks
+- `16384` - Good balance for most coding tasks
+- `32768` - Recommended for larger codebases or multi-file refactoring
+
+**Note:** Larger context windows require more VRAM. A 16K context window typically needs ~2-4GB additional VRAM compared to the default. Monitor your GPU memory usage and adjust accordingly.
