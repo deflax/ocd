@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Get the actual script location (resolving symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$SCRIPT_DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+# Get the current working directory (where script is run from)
+CURRENT_DIR="$(pwd)"
+
+# Configuration
+IMAGE_NAME="ocd:latest"
+CONTAINER_NAME="ocd"
+
+# Check if container is already running
+if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo "Container '${CONTAINER_NAME}' is already running. Attaching..."
+    docker attach "${CONTAINER_NAME}"
+    exit 0
+fi
+
+# Check if image exists
+if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+    echo "Error: Image '${IMAGE_NAME}' not found."
+    echo "Please run ./build first to build the image."
+    exit 1
+fi
+
+# Stop and remove existing stopped container if it exists
+if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo "Removing stopped container: ${CONTAINER_NAME}"
+    docker rm -f "${CONTAINER_NAME}"
+fi
+
+# Run the container
+echo "Starting container using ${CURRENT_DIR} as workspace. Script is run from ${SCRIPT_DIR}"
+docker run -it \
+    --rm \
+    --name "${CONTAINER_NAME}" \
+    --network host \
+    -v "${SCRIPT_DIR}/data:/home/opencode:rw" \
+    -v "${SCRIPT_DIR}/config:/config:rw" \
+    -v "${CURRENT_DIR}:/workspace:rw" \
+    -w /workspace \
+    -e HOME=/home/opencode \
+    -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
+    -e OPENCODE_CONFIG=/config/opencode.json \
+    --security-opt no-new-privileges:true \
+    --cap-drop ALL \
+    --cap-add CHOWN \
+    --cap-add SETUID \
+    --cap-add SETGID \
+    "${IMAGE_NAME}"
