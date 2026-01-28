@@ -1,16 +1,90 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "permission": {
-    "bash": "allow",
-    "question": "allow",    
-    "edit": "ask",
+    "external_directory": "deny",
     "read": "allow",
-    "grep": "allow",
+    "edit": "ask",
+    "write": "ask",
     "glob": "allow",
+    "grep": "allow",
     "list": "allow",
-    "webfetch": "allow",
+    "lsp": "allow",
     "todoread": "allow",
-    "todowrite": "allow"
+    "todowrite": "allow",
+    "question": "allow",
+    "webfetch": "allow",
+    "bash": {
+      "*": "ask",
+
+      "ls *": "allow",
+      "pwd *": "allow",
+      "cd *": "allow",
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "less *": "allow",
+      "more *": "allow",
+      "tree *": "allow",
+      "find *": "allow",
+      "which *": "allow",
+      "file *": "allow",
+      "stat *": "allow",
+      "wc *": "allow",
+      "du *": "allow",
+      "df *": "allow",
+
+      "grep *": "allow",
+      "rg *": "allow",
+      "ag *": "allow",
+      "sed *": "allow",
+      "awk *": "allow",
+      "sort *": "allow",
+      "uniq *": "allow",
+      "diff *": "allow",
+      "cut *": "allow",
+      "tr *": "allow",
+
+      "git status *": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git branch *": "allow",
+      "git show *": "allow",
+      "git stash list *": "allow",
+      "git remote *": "allow",
+      "git tag *": "allow",
+      "git blame *": "allow",
+      "git shortlog *": "allow",
+      "git rev-parse *": "allow",
+      "git ls-files *": "allow",
+      "git ls-tree *": "allow",
+      "git cat-file *": "allow",
+      "git describe *": "allow",
+
+      "node *": "allow",
+      "npm *": "allow",
+      "npx *": "allow",
+      "bun *": "allow",
+      "pnpm *": "allow",
+      "yarn *": "allow",
+      "tsc *": "allow",
+
+      "curl *": "allow",
+      "wget *": "allow",
+      "jq *": "allow",
+      "yq *": "allow",
+
+      "echo *": "allow",
+      "printf *": "allow",
+      "env *": "allow",
+      "printenv *": "allow",
+      "date *": "allow",
+      "whoami *": "allow",
+      "uname *": "allow",
+
+      "xargs *": "ask",
+      "sudo *": "deny",
+      "su *": "deny"
+    }
   },
   "provider": {
     "ollama": {
@@ -29,6 +103,10 @@
       }
     }
   },
-  "plugin": ["opencode-anthropic-auth@latest"],
+  "plugin": [
+    "opencode-anthropic-auth@latest",
+    "@tarquinen/opencode-dcp@latest",
+    "opencode-websearch-cited@latest"
+  ],
   "theme": "orng"
 }
