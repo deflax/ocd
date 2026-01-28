@@ -29,5 +29,6 @@
       }
     }
   },
-  "plugin": ["opencode-anthropic-auth@latest"]
+  "plugin": ["opencode-anthropic-auth@latest"],
+  "theme": "orng"
 }
