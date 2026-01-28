@@ -28,5 +28,6 @@
         }
       }
     }
-  }
+  },
+  "plugin": ["opencode-anthropic-auth@latest"]
 }
