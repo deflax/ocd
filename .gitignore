@@ -1,7 +1,3 @@
-# Ignore the files and subdirs in data
-
-data/.bun
-data/.cache
-data/.config
-data/.local
-data/.bash_history
+# Ignore everything in data/ except .gitkeep
+data/*
+!data/.gitkeep

@@ -24,7 +24,7 @@ RUN apk add --no-cache \
     xdg-utils \
     xclip \
     wl-clipboard \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/cache/apk/*
 
 # Create 'coder' user with configurable UID/GID, handling conflicts
 RUN set -e; \
