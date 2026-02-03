@@ -9,7 +9,7 @@ ARG GID=1000
 
 USER root
 
-# Install additional tools
+# Install core tools
 RUN apk add --no-cache \
     ca-certificates \
     curl \
@@ -24,6 +24,30 @@ RUN apk add --no-cache \
     xdg-utils \
     xclip \
     wl-clipboard \
+    # Python
+    python3 \
+    py3-pip \
+    py3-virtualenv \
+    # Node.js
+    nodejs \
+    npm \
+    # Go
+    go \
+    # Build toolchain
+    gcc \
+    musl-dev \
+    make \
+    # CLI essentials
+    jq \
+    yq \
+    tree \
+    file \
+    zip \
+    diffutils \
+    fd \
+    patch \
+    tar \
+    gzip \
     && rm -rf /var/cache/apk/*
 
 # Create 'coder' user with configurable UID/GID, handling conflicts

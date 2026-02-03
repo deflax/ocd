@@ -60,6 +60,15 @@
       "git cat-file *": "allow",
       "git describe *": "allow",
 
+      "python3 *": "allow",
+      "pip3 *": "allow",
+      "pip *": "allow",
+      "pytest *": "allow",
+
+      "go *": "allow",
+
+      "make *": "allow",
+
       "node *": "allow",
       "npm *": "allow",
       "npx *": "allow",
