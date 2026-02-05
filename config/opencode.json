@@ -95,6 +95,16 @@
       "su *": "deny"
     }
   },
+  "agent": {
+    "ask": {
+      "mode": "primary",
+      "tools": {
+        "*": false,
+        "web_search": true
+      },
+      "prompt": "Answer briefly and directly."
+    }
+  },
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
