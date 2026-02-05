@@ -98,6 +98,7 @@
   "agent": {
     "ask": {
       "mode": "primary",
+      "color": "accent",
       "tools": {
         "*": false,
         "web_search": true
