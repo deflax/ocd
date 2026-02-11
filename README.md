@@ -38,13 +38,36 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - OpenCode config is stored in `config/opencode.json`
 - Persistent user data is stored in `data/`
 
+### Local Config Overrides
+
+To add sensitive or personal settings without committing them to the repo, create a `config/opencode.local.json` file with only the fields you want to override:
+
+```json
+{
+  "provider": {
+    "apiKey": "sk-secret-key"
+  }
+}
+```
+
+On startup, `ocd` will deep merge `opencode.local.json` on top of the base `opencode.json` using `jq`. Nested objects are merged recursively — you only need to specify the fields you want to change. The merged result is written to `config/opencode.merged.json` (gitignored) and mounted read-only into the container.
+
+If no `opencode.local.json` exists, the base `opencode.json` is used as-is.
+
+### X11 Clipboard Support
+
+If `/tmp/.X11-unix` exists on the host, it is automatically mounted into the container (read-only) along with the `DISPLAY` environment variable. This enables X11-based clipboard sharing between the host and container. If the directory doesn't exist (e.g. on Wayland-only or macOS hosts), it is simply skipped.
+
 ## Directory Structure
 
 ```
 .
 ├── build           # Script to build the Docker image
 ├── ocd             # Script to run the container
-├── config/         # OpenCode configuration (mounted to /config)
+├── config/         # OpenCode configuration
+│   ├── opencode.json        # Base config (committed)
+│   ├── opencode.local.json  # Local overrides (gitignored, optional)
+│   └── opencode.merged.json # Merged result (gitignored, auto-generated)
 ├── data/           # Persistent home directory (mounted to /home/opencode)
 └── Dockerfile      # Container definition
 ```
