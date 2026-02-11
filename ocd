@@ -38,6 +38,12 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     docker rm -f "${CONTAINER_NAME}"
 fi
 
+# Config: use local override if it exists, otherwise use the default
+OPENCODE_CONFIG_FILE="opencode.json"
+if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
+    OPENCODE_CONFIG_FILE="opencode.local.json"
+fi
+
 # X11 clipboard support: mount the socket dir only if it exists
 X11_MOUNT=()
 if [ -d /tmp/.X11-unix ]; then
@@ -58,7 +64,7 @@ docker run -it \
     -e HOME=/home/opencode \
     -e DISPLAY="${DISPLAY:-}" \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
-    -e OPENCODE_CONFIG=/config/opencode.json \
+    -e OPENCODE_CONFIG="/config/${OPENCODE_CONFIG_FILE}" \
     --security-opt no-new-privileges:true \
     --cap-drop ALL \
     --cap-add CHOWN \
