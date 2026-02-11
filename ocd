@@ -38,6 +38,12 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     docker rm -f "${CONTAINER_NAME}"
 fi
 
+# X11 clipboard support: mount the socket dir only if it exists
+X11_MOUNT=()
+if [ -d /tmp/.X11-unix ]; then
+    X11_MOUNT=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
+fi
+
 # Run the container
 echo "Starting container using ${CURRENT_DIR} as workspace. Script is run from ${SCRIPT_DIR}"
 docker run -it \
@@ -47,8 +53,10 @@ docker run -it \
     -v "${SCRIPT_DIR}/data:/home/opencode:rw" \
     -v "${SCRIPT_DIR}/config:/config:rw" \
     -v "${CURRENT_DIR}:/workspace:rw" \
+    "${X11_MOUNT[@]}" \
     -w /workspace \
     -e HOME=/home/opencode \
+    -e DISPLAY="${DISPLAY:-}" \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     --security-opt no-new-privileges:true \
@@ -56,4 +64,5 @@ docker run -it \
     --cap-add CHOWN \
     --cap-add SETUID \
     --cap-add SETGID \
-    "${IMAGE_NAME}"
+    "${IMAGE_NAME}" \
+    $@
