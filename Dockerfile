@@ -47,6 +47,8 @@ RUN apk add --no-cache \
     fd \
     patch \
     tar \
+    # glibc compat layer (needed for ast-grep CLI which has no musl binary)
+    gcompat \
     gzip \
     && rm -rf /var/cache/apk/*
 
@@ -89,8 +91,23 @@ RUN set -e; \
     fi
 
 # Install oh-my-opencode plugin globally
-RUN npm install -g oh-my-opencode@latest
+# --ignore-scripts: @ast-grep/cli postinstall fails on Alpine/musl (no musl binary published)
+RUN npm install -g oh-my-opencode@latest --ignore-scripts
 
+# Install ast-grep CLI manually from GitHub releases (glibc binary via gcompat)
+ARG AST_GREP_VERSION=0.41.0
+RUN set -e; \
+    ARCH="$(uname -m)"; \
+    case "$ARCH" in \
+        x86_64) TARGET="x86_64-unknown-linux-gnu" ;; \
+        aarch64) TARGET="aarch64-unknown-linux-gnu" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/app-${TARGET}.zip" -o /tmp/ast-grep.zip && \
+    unzip -o /tmp/ast-grep.zip -d /tmp/ast-grep && \
+    install -m 755 "$(find /tmp/ast-grep -name 'sg' -type f | head -1)" /usr/local/bin/sg && \
+    ln -sf /usr/local/bin/sg /usr/local/bin/ast-grep && \
+    rm -rf /tmp/ast-grep /tmp/ast-grep.zip
 
 USER coder
 WORKDIR /workspace
