@@ -82,6 +82,7 @@ docker run -it \
     -e DISPLAY="${DISPLAY:-}" \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
+    -e OPENCODE_CONFIG_DIR=/config \
     --security-opt no-new-privileges:true \
     --cap-drop ALL \
     --cap-add CHOWN \

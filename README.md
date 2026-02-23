@@ -87,6 +87,7 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 The `ocd` script:
 - Builds and runs the `ocd:latest` Docker image
 - Mounts your current directory to `/workspace` inside the container
+- Mounts OpenCode and oh-my-opencode config files to `/config` and sets both `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR=/config`
 - Attaches to an existing container if one is already running
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
