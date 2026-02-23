@@ -88,5 +88,9 @@ RUN set -e; \
         addgroup coder ${EXISTING_GROUP}; \
     fi
 
+# Install oh-my-opencode plugin globally
+RUN npm install -g oh-my-opencode@latest
+
+
 USER coder
 WORKDIR /workspace

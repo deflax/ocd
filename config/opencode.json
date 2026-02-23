@@ -124,7 +124,8 @@
     }
   },
   "plugin": [
-    "opencode-anthropic-auth@latest"
+    "opencode-anthropic-auth@latest",
+    "oh-my-opencode@latest"
   ],
   "theme": "orng"
 }

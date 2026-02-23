@@ -5,3 +5,5 @@ data/*
 # Local config overrides (may contain sensitive keys/settings)
 config/opencode.local.json
 config/opencode.merged.json
+config/oh-my-opencode.local.json
+config/oh-my-opencode.merged.json

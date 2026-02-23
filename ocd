@@ -49,6 +49,17 @@ if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
     OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
 fi
 
+# oh-my-opencode config: deep merge local overrides if they exist
+OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.json"
+if [ -f "${SCRIPT_DIR}/config/oh-my-opencode.local.json" ]; then
+    echo "Merging oh-my-opencode.local.json into oh-my-opencode.json..."
+    jq -s '.[0] * .[1]' \
+        "${SCRIPT_DIR}/config/oh-my-opencode.json" \
+        "${SCRIPT_DIR}/config/oh-my-opencode.local.json" \
+        > "${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
+    OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
+fi
+
 # X11 clipboard support: mount the socket dir only if it exists
 X11_MOUNT=()
 if [ -d /tmp/.X11-unix ]; then
@@ -63,6 +74,7 @@ docker run -it \
     --network host \
     -v "${SCRIPT_DIR}/data:/home/opencode:rw" \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
+    -v "${OMO_CONFIG_HOST}:/config/oh-my-opencode.json:ro" \
     -v "${CURRENT_DIR}:/workspace:rw" \
     "${X11_MOUNT[@]}" \
     -w /workspace \

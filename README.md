@@ -9,6 +9,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
+- [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin for multi-agent orchestration
 
 ## Quick Start
 
@@ -58,6 +59,12 @@ If no `opencode.local.json` exists, the base `opencode.json` is used as-is.
 
 If `/tmp/.X11-unix` exists on the host, it is automatically mounted into the container (read-only) along with the `DISPLAY` environment variable. This enables X11-based clipboard sharing between the host and container. If the directory doesn't exist (e.g. on Wayland-only or macOS hosts), it is simply skipped.
 
+### oh-my-opencode
+
+The [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin is pre-installed in the Docker image and provides multi-agent orchestration (Sisyphus, Hephaestus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and the `ultrawork` command.
+
+Agent model assignments are configured in `config/oh-my-opencode.json`. Like the main config, you can create `config/oh-my-opencode.local.json` for personal overrides (gitignored).
+
 ## Directory Structure
 
 ```
@@ -65,9 +72,12 @@ If `/tmp/.X11-unix` exists on the host, it is automatically mounted into the con
 ├── build           # Script to build the Docker image
 ├── ocd             # Script to run the container
 ├── config/         # OpenCode configuration
-│   ├── opencode.json        # Base config (committed)
-│   ├── opencode.local.json  # Local overrides (gitignored, optional)
-│   └── opencode.merged.json # Merged result (gitignored, auto-generated)
+│   ├── opencode.json              # Base config (committed)
+│   ├── opencode.local.json        # Local overrides (gitignored, optional)
+│   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
+│   ├── oh-my-opencode.json        # oh-my-opencode config (committed)
+│   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
+│   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
 ├── data/           # Persistent home directory (mounted to /home/opencode)
 └── Dockerfile      # Container definition
 ```
