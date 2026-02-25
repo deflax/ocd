@@ -1,25 +1,37 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+
   "agents": {
-    "explore": {
-      "model": "openai/gpt-5.3-codex"
-    },
-    "librarian": {
-      "model": "openai/gpt-5.3-codex"
-    },
-    "oracle": {
-      "model": "openai/gpt-5.3-codex"
-    },
     "sisyphus": {
-      "model": "openai/gpt-5.3-codex"
-    },
-    "sisyphus-junior": {
-      "model": "openai/gpt-5.3-codex"
+      "model": "anthropic/claude-opus-4-6",
+      "ultrawork": { "model": "anthropic/claude-opus-4-6", "variant": "max" }
     },
     "hephaestus": {
-      "model": "openai/gpt-5.3-codex"
-    }
+      "model": "openai/gpt-5.3-codex",
+      "ultrawork": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" }
+    },
+    "librarian": { "model": "openai/gpt-5.2" },
+    "explore":   { "model": "openai/gpt-5.2" },
+    "oracle": { "model": "openai/gpt-5.2", "variant": "high" },
+    "prometheus": { "prompt_append": "Leverage deep & quick agents heavily, always in parallel." }
   },
+
+  "categories": {
+    "visual-engineering": { "model": "anthropic/claude-opus-4-6", "variant": "high" },
+    "ultrabrain": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" },
+    "deep": { "model": "openai/gpt-5.3-codex", "variant": "high" },
+    "artistry": { "model": "anthropic/claude-opus-4-6", "variant": "high" },
+    "quick": { "model": "openai/gpt-5.2" },
+    "unspecified-high": { "model": "openai/gpt-5.3-codex", "variant": "max" },
+    "unspecified-low": { "model": "openai/gpt-5.2" },
+    "writing": { "model": "anthropic/claude-sonnet-4-6" }
+  },
+
+  "background_task": {
+    "providerConcurrency": { "anthropic": 3, "openai": 3, "opencode": 10 },
+    "modelConcurrency": { "anthropic/claude-opus-4-6": 2, "opencode/gpt-5.2": 20 }
+  },
+
   "disabled_skills": [
     "playwright"
   ]
