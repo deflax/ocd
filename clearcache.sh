@@ -10,18 +10,33 @@ while [ -h "$SOURCE" ]; do
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
-CACHE_ROOT="${SCRIPT_DIR}/data/.cache"
+DATA_DIR="${SCRIPT_DIR}/data"
 DRY_RUN=false
 
 usage() {
   cat <<'EOF'
 Usage: ./clearcache.sh [--dry-run]
 
-Clears OpenCode/oh-my-opencode cache files only.
-Preserves provider/auth/config files under data/.config and data/.
+Clears all OpenCode/oh-my-opencode cache and package-manager caches.
+
+Removes:
+  data/.cache/opencode/       Cached models list, node_modules, tmp files
+  data/.cache/oh-my-opencode/ Cached provider info, downloaded binaries, tmp files
+  data/.cache/pip/            pip download cache
+  data/.npm/_cacache/         npm content-addressable cache
+  data/.npm/_logs/            npm log files
+  data/.npm/_npx/             npx execution cache
+  data/.bun/install/          bun package install cache
+
+Preserves:
+  data/.config/               OpenCode plugin installs and settings
+  data/.claude/               Session transcripts
+  data/.local/                User local bin/lib/share/state
+  data/.terraform.d/          Terraform state
+  config/                     All configuration (mounted read-only in container)
 
 Options:
-  --dry-run   Show what would be removed
+  --dry-run   Show what would be removed without deleting
   -h, --help  Show help
 EOF
 }
@@ -41,27 +56,31 @@ for arg in "$@"; do
   esac
 done
 
-if [ ! -d "$CACHE_ROOT" ]; then
-  printf 'No cache directory found: %s\n' "$CACHE_ROOT"
-  exit 0
-fi
-
+# Directories and file globs to remove entirely.
+# Each entry is removed with rm -rf if it exists.
 declare -a TARGETS=(
-  "$CACHE_ROOT/opencode/models.json"
-  "$CACHE_ROOT/opencode/version"
-  "$CACHE_ROOT/opencode/tmp"
-  "$CACHE_ROOT/opencode/.tmp"
-  "$CACHE_ROOT/oh-my-opencode/connected-providers.json"
-  "$CACHE_ROOT/oh-my-opencode/provider-models.json"
-  "$CACHE_ROOT/oh-my-opencode/tmp"
-  "$CACHE_ROOT/oh-my-opencode/.tmp"
+  # OpenCode cache (models list, node_modules, lock files, tmp)
+  "${DATA_DIR}/.cache/opencode"
+  # oh-my-opencode cache (provider info, downloaded binaries, tmp)
+  "${DATA_DIR}/.cache/oh-my-opencode"
+  # pip download cache
+  "${DATA_DIR}/.cache/pip"
+  # npm caches (content-addressable store, logs, npx)
+  "${DATA_DIR}/.npm/_cacache"
+  "${DATA_DIR}/.npm/_logs"
+  "${DATA_DIR}/.npm/_npx"
+  # bun package install cache
+  "${DATA_DIR}/.bun/install"
 )
 
 removed=0
+freed_desc=""
 for target in "${TARGETS[@]}"; do
   if [ -e "$target" ]; then
     if [ "$DRY_RUN" = true ]; then
-      printf '[dry-run] remove %s\n' "$target"
+      # Show size of what would be removed
+      size=$(du -sh "$target" 2>/dev/null | cut -f1 || echo "?")
+      printf '[dry-run] remove %-50s (%s)\n' "$target" "$size"
     else
       rm -rf "$target"
       printf 'removed %s\n' "$target"
@@ -71,11 +90,12 @@ for target in "${TARGETS[@]}"; do
 done
 
 if [ "$removed" -eq 0 ]; then
-  printf 'No matching cache artifacts found.\n'
+  printf 'No cache artifacts found.\n'
 else
   if [ "$DRY_RUN" = true ]; then
-    printf '[dry-run] total candidates: %d\n' "$removed"
+    printf '\n[dry-run] %d item(s) would be removed.\n' "$removed"
   else
-    printf 'Done. Removed %d cache artifact(s).\n' "$removed"
+    printf '\nDone. Removed %d cache artifact(s).\n' "$removed"
+    printf 'Caches will be rebuilt automatically on next OpenCode launch.\n'
   fi
 fi
