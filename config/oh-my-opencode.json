@@ -7,22 +7,22 @@
       "ultrawork": { "model": "anthropic/claude-opus-4-6", "variant": "max" }
     },
     "hephaestus": {
-      "model": "openai/gpt-5.3-codex",
-      "ultrawork": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" }
+      "model": "openai/gpt-5.4",
+      "ultrawork": { "model": "openai/gpt-5.4", "variant": "xhigh" }
     },
-    "librarian": { "model": "openai/gpt-5.2" },
-    "explore":   { "model": "openai/gpt-5.2" },
-    "oracle": { "model": "openai/gpt-5.2", "variant": "high" },
+    "librarian": { "model": "openai/gpt-5.4" },
+    "explore":   { "model": "openai/gpt-5.4" },
+    "oracle": { "model": "openai/gpt-5.4", "variant": "high" },
     "prometheus": { "prompt_append": "Leverage deep & quick agents heavily, always in parallel." }
   },
 
   "categories": {
     "visual-engineering": { "model": "anthropic/claude-opus-4-6", "variant": "high" },
-    "ultrabrain": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" },
-    "deep": { "model": "openai/gpt-5.3-codex", "variant": "high" },
+    "ultrabrain": { "model": "openai/gpt-5.4", "variant": "xhigh" },
+    "deep": { "model": "openai/gpt-5.4", "variant": "high" },
     "artistry": { "model": "anthropic/claude-opus-4-6", "variant": "high" },
-    "quick": { "model": "openai/gpt-5.2" },
-    "unspecified-high": { "model": "openai/gpt-5.3-codex", "variant": "max" },
+    "quick": { "model": "openai/gpt-5.4" },
+    "unspecified-high": { "model": "openai/gpt-5.4", "variant": "max" },
     "unspecified-low": { "model": "openai/gpt-5.2" },
     "writing": { "model": "anthropic/claude-sonnet-4-6" }
   },
