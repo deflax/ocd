@@ -94,6 +94,9 @@ RUN set -e; \
 # --ignore-scripts: @ast-grep/cli postinstall fails on Alpine/musl (no musl binary published)
 RUN npm install -g oh-my-opencode@latest --ignore-scripts
 
+# Install language servers
+RUN npm install -g @vue/language-server @biomejs/biome
+
 # Install ast-grep CLI manually from GitHub releases (glibc binary via gcompat)
 ARG AST_GREP_VERSION=0.41.0
 RUN set -e; \
