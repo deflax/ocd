@@ -2,6 +2,12 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
 
   "agents": {
+    "atlas": {
+      "model": "openai/gpt-5.4"
+    },
+    "explore": {
+      "model": "openai/gpt-5.2"
+    },
     "sisyphus": {
       "model": "anthropic/claude-opus-4-6",
       "ultrawork": { "model": "anthropic/claude-opus-4-6", "variant": "max" }
@@ -10,20 +16,36 @@
       "model": "openai/gpt-5.3-codex",
       "ultrawork": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" }
     },
-    "librarian": { "model": "openai/gpt-5.2" },
-    "explore":   { "model": "openai/gpt-5.2" },
-    "oracle": { "model": "openai/gpt-5.4", "variant": "high" },
-    "prometheus": { "prompt_append": "Leverage deep & quick agents heavily, always in parallel." }
+    "librarian": {
+      "model": "openai/gpt-5.4"
+    },
+    "metis": {
+      "model": "anthropic/claude-opus-4-6"
+    },
+    "momus": {
+      "model": "openai/gpt-5.4"
+    },
+    "multimodal-looker": {
+      "model": "openai/gpt-5.3-codex"
+    },
+    "oracle": {
+      "model": "openai/gpt-5.4",
+      "variant": "high"
+    },
+    "prometheus": {
+      "model": "openai/gpt-5.4",
+      "prompt_append": "Leverage deep & quick agents heavily, always in parallel." 
+    }
   },
 
   "categories": {
     "visual-engineering": { "model": "anthropic/claude-opus-4-6", "variant": "high" },
     "ultrabrain": { "model": "openai/gpt-5.4", "variant": "xhigh" },
-    "deep": { "model": "openai/gpt-5.4", "variant": "high" },
+    "deep": { "model": "openai/gpt-5.3-codex", "variant": "high" },
     "artistry": { "model": "anthropic/claude-opus-4-6", "variant": "high" },
-    "quick": { "model": "openai/gpt-5.4" },
-    "unspecified-high": { "model": "openai/gpt-5.4", "variant": "max" },
-    "unspecified-low": { "model": "openai/gpt-5.2" },
+    "quick": { "model": "openai/gpt-5.2" },
+    "unspecified-high": { "model": "anthropic/claude-opus-4-6", "variant": "max" },
+    "unspecified-low": { "model": "anthropic/claude-sonnet-4-6" },
     "writing": { "model": "anthropic/claude-sonnet-4-6" }
   },
 
