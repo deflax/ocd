@@ -114,6 +114,7 @@
   },
   "plugin": [
     "opencode-anthropic-auth@latest",
+    "@tarquinen/opencode-dcp@latest",
     "oh-my-opencode"
   ]
 }
