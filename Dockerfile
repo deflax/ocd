@@ -97,6 +97,14 @@ RUN npm install -g oh-my-opencode@latest --ignore-scripts
 # Install language servers
 RUN npm install -g @vue/language-server @biomejs/biome
 
+RUN python3 -m pip install --break-system-packages --no-cache-dir \
+    basedpyright \
+    pytest \
+    pydantic \
+    fastapi
+
+ENV PATH="/home/opencode/.local/bin:/home/coder/.local/bin:${PATH}"
+
 # Install ast-grep CLI manually from GitHub releases (glibc binary via gcompat)
 ARG AST_GREP_VERSION=0.41.0
 RUN set -e; \

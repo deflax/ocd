@@ -79,6 +79,7 @@ docker run -it \
     "${X11_MOUNT[@]}" \
     -w /workspace \
     -e HOME=/home/opencode \
+    -e PATH="/home/opencode/.local/bin:${PATH}" \
     -e DISPLAY="${DISPLAY:-}" \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
