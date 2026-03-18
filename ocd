@@ -16,26 +16,14 @@ CURRENT_DIR="$(pwd)"
 
 # Configuration
 IMAGE_NAME="ocd:latest"
-CONTAINER_NAME="ocd"
-
-# Check if container is already running
-if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "Container '${CONTAINER_NAME}' is already running. Attaching..."
-    docker attach "${CONTAINER_NAME}"
-    exit 0
-fi
+CONTAINER_NAME_PREFIX="${OCD_CONTAINER_NAME_PREFIX:-ocd}"
+CONTAINER_NAME="${CONTAINER_NAME_PREFIX}-$(date +%Y%m%d-%H%M%S)-$$"
 
 # Check if image exists
 if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
     echo "Error: Image '${IMAGE_NAME}' not found."
     echo "Please run ./build first to build the image."
     exit 1
-fi
-
-# Stop and remove existing stopped container if it exists
-if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "Removing stopped container: ${CONTAINER_NAME}"
-    docker rm -f "${CONTAINER_NAME}"
 fi
 
 # Config: deep merge local overrides on top of base config if they exist
@@ -67,7 +55,7 @@ if [ -d /tmp/.X11-unix ]; then
 fi
 
 # Run the container
-echo "Starting container using ${CURRENT_DIR} as workspace. Script is run from ${SCRIPT_DIR}"
+echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace. Script is run from ${SCRIPT_DIR}"
 docker run -it \
     --rm \
     --name "${CONTAINER_NAME}" \

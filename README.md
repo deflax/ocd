@@ -22,7 +22,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
    ```bash
    ./ocd
    ```
-   This will start the container with your current directory mounted as the workspace.
+   This starts a new container for each run with your current directory mounted as the workspace.
 
 3. **Run from any directory (optional):**
    
@@ -86,9 +86,9 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 
 The `ocd` script:
 - Builds and runs the `ocd:latest` Docker image
+- Generates a unique container name per run (for example `ocd-20260318-120001-12345`)
 - Mounts your current directory to `/workspace` inside the container
 - Mounts OpenCode and oh-my-opencode config files to `/config` and sets both `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR=/config`
-- Attaches to an existing container if one is already running
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
 ## Self-Hosted Model Configuration
