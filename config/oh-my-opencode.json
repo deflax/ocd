@@ -9,7 +9,7 @@
       "model": "openai/gpt-5.2"
     },
     "sisyphus": {
-      "model": "openai/gpt-5.4"
+      "model": "openai/gpt-5.4",
       "ultrawork": { "model": "openai/gpt-5.4", "variant": "xhigh" }
     },
     "hephaestus": {
@@ -50,7 +50,7 @@
   },
 
   "background_task": {
-    "providerConcurrency": { "openai": 3, "opencode": 10 },
+    "providerConcurrency": { "openai": 3, "opencode": 10 }
   },
 
   "disabled_skills": [
