@@ -56,5 +56,9 @@
 
   "disabled_skills": [
     "playwright"
+  ],
+
+  "disabled_hooks": [
+    "start-work"
   ]
 }
