@@ -5,9 +5,6 @@
     "atlas": {
       "model": "openai/gpt-5.4"
     },
-    "explore": {
-      "model": "openai/gpt-5.2"
-    },
     "sisyphus": {
       "model": "anthropic/claude-opus-4-6",
       "ultrawork": { "model": "anthropic/claude-opus-4-6", "variant": "max" }
@@ -15,6 +12,9 @@
     "hephaestus": {
       "model": "openai/gpt-5.3-codex",
       "ultrawork": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" }
+    },
+    "explore": {
+      "model": "openai/gpt-5.2"
     },
     "librarian": {
       "model": "openai/gpt-5.4"
@@ -59,6 +59,5 @@
   ],
 
   "disabled_hooks": [
-    "start-work"
   ]
 }
