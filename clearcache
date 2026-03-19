@@ -15,7 +15,7 @@ DRY_RUN=false
 
 usage() {
   cat <<'EOF'
-Usage: ./clearcache.sh [--dry-run]
+Usage: ./clearcache [--dry-run]
 
 Clears all OpenCode/oh-my-opencode cache and package-manager caches.
 

@@ -26,7 +26,10 @@ if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Config: deep merge local overrides on top of base config if they exist
+# Config: merge local overrides on top of base config if they exist.
+# NOTE: jq's `*` operator merges objects recursively but REPLACES arrays wholesale.
+# If the base has "plugins": ["a","b"] and local has "plugins": ["c"], the result is ["c"].
+# This is intentional — local overrides are full replacements for array fields.
 OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
 if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
     echo "Merging opencode.local.json into opencode.json..."
@@ -37,7 +40,8 @@ if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
     OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
 fi
 
-# oh-my-opencode config: deep merge local overrides if they exist
+# oh-my-opencode config: merge local overrides if they exist (same array-replace semantics as above).
+# NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
 OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.json"
 if [ -f "${SCRIPT_DIR}/config/oh-my-opencode.local.json" ]; then
     echo "Merging oh-my-opencode.local.json into oh-my-opencode.json..."
@@ -60,14 +64,14 @@ docker run -it \
     --rm \
     --name "${CONTAINER_NAME}" \
     --network host \
-    -v "${SCRIPT_DIR}/data:/home/opencode:rw" \
+    -v "${SCRIPT_DIR}/data:/home/coder:rw" \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
     -v "${OMO_CONFIG_HOST}:/config/oh-my-opencode.json:ro" \
     -v "${CURRENT_DIR}:/workspace:rw" \
     "${X11_MOUNT[@]}" \
     -w /workspace \
-    -e HOME=/home/opencode \
-    -e PATH="/home/opencode/.local/bin:${PATH}" \
+    -e HOME=/home/coder \
+    -e PATH="/home/coder/.local/bin:${PATH}" \
     -e DISPLAY="${DISPLAY:-}" \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
@@ -78,4 +82,4 @@ docker run -it \
     --cap-add SETUID \
     --cap-add SETGID \
     "${IMAGE_NAME}" \
-    $@
+    "$@"

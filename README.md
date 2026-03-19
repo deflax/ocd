@@ -78,7 +78,7 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 │   ├── oh-my-opencode.json        # oh-my-opencode config (committed)
 │   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
 │   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
-├── data/           # Persistent home directory (mounted to /home/opencode)
+├── data/           # Persistent home directory (mounted to /home/coder)
 └── Dockerfile      # Container definition
 ```
 

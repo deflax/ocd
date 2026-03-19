@@ -103,7 +103,7 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir \
     pydantic \
     fastapi
 
-ENV PATH="/home/opencode/.local/bin:/home/coder/.local/bin:${PATH}"
+ENV PATH="/home/coder/.local/bin:${PATH}"
 
 # Install ast-grep CLI manually from GitHub releases (glibc binary via gcompat)
 ARG AST_GREP_VERSION=0.41.0
