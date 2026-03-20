@@ -3,8 +3,8 @@
   "permission": {
     "external_directory": "deny",
     "read": "allow",
-    "edit": "ask",
-    "write": "ask",
+    "edit": "allow",
+    "write": "allow",
     "glob": "allow",
     "grep": "allow",
     "list": "allow",
@@ -15,7 +15,6 @@
     "webfetch": "allow",
     "bash": {
       "*": "ask",
-
       "ls *": "allow",
       "pwd *": "allow",
       "cd *": "allow",
@@ -32,7 +31,6 @@
       "wc *": "allow",
       "du *": "allow",
       "df *": "allow",
-
       "grep *": "allow",
       "rg *": "allow",
       "ag *": "allow",
@@ -43,7 +41,6 @@
       "diff *": "allow",
       "cut *": "allow",
       "tr *": "allow",
-
       "git status *": "allow",
       "git diff *": "allow",
       "git log *": "allow",
@@ -59,16 +56,12 @@
       "git ls-tree *": "allow",
       "git cat-file *": "allow",
       "git describe *": "allow",
-
       "python3 *": "allow",
       "pip3 *": "allow",
       "pip *": "allow",
       "pytest *": "allow",
-
       "go *": "allow",
-
       "make *": "allow",
-
       "node *": "allow",
       "npm *": "allow",
       "npx *": "allow",
@@ -76,12 +69,10 @@
       "pnpm *": "allow",
       "yarn *": "allow",
       "tsc *": "allow",
-
       "curl *": "allow",
       "wget *": "allow",
       "jq *": "allow",
       "yq *": "allow",
-
       "echo *": "allow",
       "printf *": "allow",
       "env *": "allow",
@@ -89,7 +80,6 @@
       "date *": "allow",
       "whoami *": "allow",
       "uname *": "allow",
-
       "xargs *": "ask",
       "sudo *": "deny",
       "su *": "deny"
@@ -113,7 +103,6 @@
     }
   },
   "plugin": [
-    "opencode-anthropic-auth@latest",
     "@tarquinen/opencode-dcp@latest",
     "oh-my-opencode"
   ]
