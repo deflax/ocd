@@ -103,6 +103,24 @@ The [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin is p
 
 Agent model assignments are configured in `config/oh-my-opencode.json`. Like the main config, you can create `config/oh-my-opencode.local.json` for personal overrides (gitignored).
 
+### Model Profiles
+
+The `ocd` script supports switching between different oh-my-opencode model configurations using the `--profile` flag:
+
+```bash
+./ocd --profile anthropic    # Use Anthropic Claude models
+./ocd                        # Use default minimax models
+```
+
+**Available profiles:**
+
+| Profile | Description |
+|---------|-------------|
+| (default) | Uses MiniMax models for most agents |
+| `anthropic` | Uses Anthropic Claude models (requires Claude Code OAuth or API key) |
+
+To create a new profile, copy `config/oh-my-opencode.json` to `config/oh-my-opencode.<profile>.json` and modify the model assignments.
+
 ## Directory Structure
 
 ```
@@ -115,7 +133,8 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
 │   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
-│   ├── oh-my-opencode.json        # oh-my-opencode config (committed)
+│   ├── oh-my-opencode.json        # oh-my-opencode default config (committed)
+│   ├── oh-my-opencode.anthropic.json # oh-my-opencode Anthropic profile (committed)
 │   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
 │   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
 ├── data/           # Persistent home directory (mounted to /home/coder)
