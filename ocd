@@ -14,6 +14,28 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 # Get the current working directory (where script is run from)
 CURRENT_DIR="$(pwd)"
 
+# Parse --profile flag (must come before any Docker args)
+OMO_PROFILE=""
+DOCKER_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --profile)
+            if [[ -n "${2:-}" ]]; then
+                OMO_PROFILE="$2"
+                shift 2
+            else
+                echo "Error: --profile requires a value (e.g., --profile anthropic)"
+                exit 1
+            fi
+            ;;
+        *)
+            DOCKER_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+set -- "${DOCKER_ARGS[@]}"
+
 # Configuration
 IMAGE_NAME="ocd:latest"
 CONTAINER_NAME_PREFIX="${OCD_CONTAINER_NAME_PREFIX:-ocd}"
@@ -40,13 +62,31 @@ if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
     OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
 fi
 
-# oh-my-opencode config: merge local overrides if they exist (same array-replace semantics as above).
+# oh-my-opencode config: select base config based on --profile flag.
+# Available profiles are files named oh-my-opencode.<profile>.json in config/.
+# Default (no --profile) uses oh-my-opencode.json.
 # NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
-OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.json"
+if [ -n "$OMO_PROFILE" ]; then
+    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode.${OMO_PROFILE}.json"
+    if [ ! -f "$OMO_BASE_CONFIG" ]; then
+        echo "Error: Profile '${OMO_PROFILE}' not found (expected ${OMO_BASE_CONFIG})"
+        echo "Available profiles:"
+        for f in "${SCRIPT_DIR}"/config/oh-my-opencode.*.json; do
+            [ -f "$f" ] || continue
+            basename "$f" | sed 's/^oh-my-opencode\.//; s/\.json$//'  | grep -v '^local$\|^merged$'
+        done
+        exit 1
+    fi
+    echo "Using oh-my-opencode profile: ${OMO_PROFILE}"
+else
+    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode.json"
+fi
+
+OMO_CONFIG_HOST="$OMO_BASE_CONFIG"
 if [ -f "${SCRIPT_DIR}/config/oh-my-opencode.local.json" ]; then
-    echo "Merging oh-my-opencode.local.json into oh-my-opencode.json..."
+    echo "Merging oh-my-opencode.local.json into $(basename "$OMO_BASE_CONFIG")..."
     jq -s '.[0] * .[1]' \
-        "${SCRIPT_DIR}/config/oh-my-opencode.json" \
+        "$OMO_BASE_CONFIG" \
         "${SCRIPT_DIR}/config/oh-my-opencode.local.json" \
         > "${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
     OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
