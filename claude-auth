@@ -53,13 +53,14 @@ run_claude_auth() {
         --rm \
         --name "${CONTAINER_NAME}" \
         --network host \
+        --entrypoint claude \
         -v "${DATA_DIR}:/home/coder:rw" \
         -w /tmp \
         -e HOME=/home/coder \
         --security-opt no-new-privileges:true \
         --cap-drop ALL \
         "${IMAGE_NAME}" \
-        claude auth "${cmd}"
+        auth "${cmd}"
 }
 
 # Parse command
