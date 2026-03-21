@@ -94,7 +94,7 @@ RUN set -e; \
 # --ignore-scripts: @ast-grep/cli postinstall fails on Alpine/musl (no musl binary published)
 RUN npm install -g oh-my-opencode@latest --ignore-scripts
 
-# Install Claude Code CLI
+# Install Claude Code CLI and opencode-claude-auth plugin
 RUN npm install -g @anthropic-ai/claude-code opencode-claude-auth
 
 # Alpine musl: use system ripgrep instead of bundled one

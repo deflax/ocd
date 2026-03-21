@@ -9,7 +9,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
-- [Claude Code CLI](https://github.com/anthropics/claude-code) with OAuth support via [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth)
+- [Claude Code](https://github.com/anthropics/claude-code) OAuth token support (use your Pro/Max subscription)
 - [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin for multi-agent orchestration
 
 ## Quick Start
@@ -21,9 +21,9 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 
 2. **Set up Claude authentication (first time only):**
    ```bash
-   ./claude-auth
+   ./claude-auth setup-token
    ```
-   This starts a temporary container and runs `claude auth login`. It will print a URL — open it in your browser, authorize, and paste the code back into the terminal. Credentials are saved to `data/.claude/.credentials.json` and persist across container restarts.
+   This generates a long-lived OAuth token (~1 year). If the `claude` CLI is installed on your host, it opens a browser for authorization. Otherwise, follow the instructions to install it or run it inside the container. Paste the token when prompted — it's saved to `.claude-token` and injected into every container run.
 
    See [Claude Code Authentication](#claude-code-authentication) for details.
 
@@ -70,33 +70,32 @@ If `/tmp/.X11-unix` exists on the host, it is automatically mounted into the con
 
 ### Claude Code Authentication
 
-The container includes [Claude Code CLI](https://github.com/anthropics/claude-code) and the [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) plugin, which lets OpenCode use your Claude subscription (Pro/Team/Enterprise) via OAuth tokens.
+Use your Claude Pro/Max/Team subscription with OpenCode via a long-lived OAuth token.
 
-**First-time setup:**
+**Setup (one-time, runs on your host machine):**
 
 ```bash
-./claude-auth
+./claude-auth setup-token
 ```
 
-This spins up a temporary container, runs `claude auth login`, and walks you through the OAuth flow:
+This runs `claude setup-token` on your host (via local install or `npx`), opens a browser for authorization, and saves the token to `.claude-token`. The `ocd` script passes it into the container as `CLAUDE_CODE_OAUTH_TOKEN`.
 
-1. A URL is printed in the terminal
-2. Open the URL in your browser and authorize
-3. Paste the code back into the terminal
-4. Credentials are saved to `data/.claude/.credentials.json`
+You can also set the env var directly:
+```bash
+export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
+./ocd
+```
 
 **Other commands:**
 
 ```bash
-./claude-auth status   # Check if credentials are valid
-./claude-auth logout   # Remove credentials
+./claude-auth status   # Check if token exists
+./claude-auth logout   # Remove token
 ```
 
-**How it works:** The `opencode-claude-auth` plugin reads OAuth tokens from `~/.claude/.credentials.json` (which maps to `data/.claude/.credentials.json` on the host), injects them into OpenCode's API requests, and auto-refreshes tokens when they near expiry by invoking the `claude` CLI.
+**How it works:** The `ocd` script reads `.claude-token` (or the `CLAUDE_CODE_OAUTH_TOKEN` env var) and seeds `data/.claude/.credentials.json` before launching the container. Inside the container, the [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) plugin reads these credentials and injects OAuth Bearer authentication into all Anthropic API requests. The Claude Code CLI (also installed in the image) handles token refresh when needed. The token is valid for ~1 year.
 
-**Credential persistence:** Since `data/` is mounted as the container's home directory, credentials survive container restarts. No additional volume mounts are needed.
-
-**Alternative — API key auth:** If you have an Anthropic API key and don't need subscription-based OAuth, set `OPENCODE_API_KEY` in your environment. The plugin becomes a no-op and falls through to standard API key auth.
+**Alternative — API key auth:** If you have an Anthropic API key and don't need subscription-based OAuth, set `OPENCODE_API_KEY` in your environment.
 
 ### oh-my-opencode
 
@@ -120,7 +119,8 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 │   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
 │   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
 ├── data/           # Persistent home directory (mounted to /home/coder)
-│   └── .claude/    # Claude Code data (credentials, transcripts)
+│   └── .claude/    # Claude credentials (auto-seeded by ocd, gitignored)
+├── .claude-token   # OAuth token file (gitignored, created by claude-auth)
 └── Dockerfile      # Container definition
 ```
 

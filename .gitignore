@@ -8,5 +8,8 @@ config/opencode.merged.json
 config/oh-my-opencode.local.json
 config/oh-my-opencode.merged.json
 
+# Claude OAuth token (sensitive)
+.claude-token
+
 # Temporary files (cloned repos, build artifacts)
 tmp/

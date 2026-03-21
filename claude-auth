@@ -12,10 +12,7 @@ done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
 # Configuration
-IMAGE_NAME="ocd:latest"
-CONTAINER_NAME="ocd-claude-auth-$$"
-DATA_DIR="${SCRIPT_DIR}/data"
-CRED_FILE="${DATA_DIR}/.claude/.credentials.json"
+TOKEN_FILE="${SCRIPT_DIR}/.claude-token"
 
 usage() {
     cat <<'EOF'
@@ -24,72 +21,92 @@ Usage: ./claude-auth [command]
 Manage Claude Code authentication for the OCD container.
 
 Commands:
-  login     Authenticate with Claude (default if no command given)
-  status    Check current authentication status
-  logout    Remove Claude credentials
+  setup-token   Generate a long-lived OAuth token (default)
+  status        Check current authentication status
+  logout        Remove Claude credentials
 
-The OAuth flow will print a URL — open it in your browser, authorize,
-and paste the code back into the terminal.
+Flow:
+  1. Run ./claude-auth setup-token
+  2. A browser opens on your machine — authorize once
+  3. Paste the token when prompted
+  4. Token is saved and injected into every container run
 
-Credentials are stored in data/.claude/.credentials.json and persist
-across container restarts.
+Credentials persist across container restarts.
 EOF
 }
 
-check_image() {
-    if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
-        echo "Error: Image '${IMAGE_NAME}' not found."
-        echo "Please run ./build first to build the image."
+do_setup_token() {
+    local token="$1"
+
+    if [ -z "$token" ]; then
+        echo "=== Claude Code Token Setup ==="
+        echo ""
+        echo "This generates a long-lived OAuth token (valid ~1 year)."
+        echo "A browser will open on this machine — authorize and copy the token."
+        echo ""
+
+        # Run claude setup-token: use local install, or npx as fallback
+        if command -v claude >/dev/null 2>&1; then
+            claude setup-token
+        elif command -v npx >/dev/null 2>&1; then
+            echo "Claude CLI not found locally — running via npx (temporary, no install)..."
+            echo ""
+            npx --yes @anthropic-ai/claude-code setup-token
+        else
+            echo "Error: Neither 'claude' nor 'npx' found on this machine." >&2
+            echo "" >&2
+            echo "Install Node.js (which includes npx), then re-run this command." >&2
+            echo "Or install Claude CLI manually: npm install -g @anthropic-ai/claude-code" >&2
+            exit 1
+        fi
+
+        echo ""
+        echo "Paste the token below (sk-ant-oat01-...):"
+        read -r -p "> " token
+    fi
+
+    if [ -z "$token" ]; then
+        echo "Error: No token provided." >&2
         exit 1
     fi
-}
 
-run_claude_auth() {
-    local cmd="$1"
-    check_image
+    # Validate token format
+    if [[ ! "$token" =~ ^sk-ant-oat ]]; then
+        echo "Warning: Token doesn't look like a Claude OAuth token (expected sk-ant-oat...)."
+        echo "Saving anyway — if auth fails, re-run this command."
+    fi
 
-    echo "Starting temporary container for Claude auth..."
-    docker run -it \
-        --rm \
-        --name "${CONTAINER_NAME}" \
-        --network host \
-        --entrypoint claude \
-        -v "${DATA_DIR}:/home/coder:rw" \
-        -w /tmp \
-        -e HOME=/home/coder \
-        --security-opt no-new-privileges:true \
-        --cap-drop ALL \
-        "${IMAGE_NAME}" \
-        auth "${cmd}"
+    # Save token
+    echo "$token" > "$TOKEN_FILE"
+    chmod 600 "$TOKEN_FILE"
+    echo ""
+    echo "Token saved to .claude-token"
+    echo "The ocd script will pass CLAUDE_CODE_OAUTH_TOKEN into the container automatically."
+    echo ""
+    echo "You can now run: ./ocd"
 }
 
 # Parse command
-CMD="${1:-login}"
+CMD="${1:-setup-token}"
 
 case "$CMD" in
-    login)
-        run_claude_auth login
-        if [ -f "$CRED_FILE" ]; then
-            echo ""
-            echo "Authentication successful! Credentials saved to data/.claude/.credentials.json"
-            echo "The opencode-claude-auth plugin will pick these up automatically."
-        fi
+    setup-token)
+        do_setup_token "$2"
         ;;
     status)
-        run_claude_auth status
-        if [ -f "$CRED_FILE" ]; then
-            echo ""
-            echo "Credential file exists: data/.claude/.credentials.json"
+        if [ -f "$TOKEN_FILE" ]; then
+            echo "OAuth token file: .claude-token"
+            echo "Token prefix: $(head -c 20 "$TOKEN_FILE")..."
         else
-            echo ""
-            echo "No credential file found. Run ./claude-auth login to authenticate."
+            echo "No token found. Run ./claude-auth setup-token to authenticate."
         fi
         ;;
     logout)
-        run_claude_auth logout
-        if [ -f "$CRED_FILE" ]; then
-            rm -f "$CRED_FILE"
-            echo "Removed data/.claude/.credentials.json"
+        if [ -f "$TOKEN_FILE" ]; then
+            rm -f "$TOKEN_FILE"
+            echo "Removed .claude-token"
+        else
+            echo "No token file found."
         fi
         echo "Claude credentials cleared."
         ;;

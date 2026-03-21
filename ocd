@@ -52,6 +52,24 @@ if [ -f "${SCRIPT_DIR}/config/oh-my-opencode.local.json" ]; then
     OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
 fi
 
+# Claude Code OAuth token: read from .claude-token file or env var,
+# then seed ~/.claude/.credentials.json so the opencode-claude-auth plugin can read it.
+CLAUDE_TOKEN_FILE="${SCRIPT_DIR}/.claude-token"
+if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+    : # env var already set, use as-is
+elif [ -f "$CLAUDE_TOKEN_FILE" ]; then
+    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$CLAUDE_TOKEN_FILE")"
+fi
+
+if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+    CLAUDE_CRED_DIR="${SCRIPT_DIR}/data/.claude"
+    CLAUDE_CRED_FILE="${CLAUDE_CRED_DIR}/.credentials.json"
+    mkdir -p "$CLAUDE_CRED_DIR"
+    printf '{"claudeAiOauth":{"accessToken":"%s","refreshToken":"","expiresAt":1800000000000}}\n' \
+        "$CLAUDE_CODE_OAUTH_TOKEN" > "$CLAUDE_CRED_FILE"
+    chmod 600 "$CLAUDE_CRED_FILE"
+fi
+
 # X11 clipboard support: mount the socket dir only if it exists
 X11_MOUNT=()
 if [ -d /tmp/.X11-unix ]; then
