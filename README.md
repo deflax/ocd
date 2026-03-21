@@ -9,6 +9,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
+- [Claude Code CLI](https://github.com/anthropics/claude-code) with OAuth support via [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth)
 - [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin for multi-agent orchestration
 
 ## Quick Start
@@ -18,13 +19,21 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
    ./build
    ```
 
-2. **Run the container:**
+2. **Set up Claude authentication (first time only):**
+   ```bash
+   ./claude-auth
+   ```
+   This starts a temporary container and runs `claude auth login`. It will print a URL — open it in your browser, authorize, and paste the code back into the terminal. Credentials are saved to `data/.claude/.credentials.json` and persist across container restarts.
+
+   See [Claude Code Authentication](#claude-code-authentication) for details.
+
+3. **Run the container:**
    ```bash
    ./ocd
    ```
    This starts a new container for each run with your current directory mounted as the workspace.
 
-3. **Run from any directory (optional):**
+4. **Run from any directory (optional):**
    
    Create a symlink to run `ocd` from anywhere:
    ```bash
@@ -35,9 +44,9 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 
 ## Configuration
 
-- Set your API key via the `OPENCODE_API_KEY` environment variable
 - OpenCode config is stored in `config/opencode.json`
 - Persistent user data is stored in `data/`
+- Claude authentication is managed via `./claude-auth` (see below)
 
 ### Local Config Overrides
 
@@ -59,6 +68,36 @@ If no `opencode.local.json` exists, the base `opencode.json` is used as-is.
 
 If `/tmp/.X11-unix` exists on the host, it is automatically mounted into the container (read-only) along with the `DISPLAY` environment variable. This enables X11-based clipboard sharing between the host and container. If the directory doesn't exist (e.g. on Wayland-only or macOS hosts), it is simply skipped.
 
+### Claude Code Authentication
+
+The container includes [Claude Code CLI](https://github.com/anthropics/claude-code) and the [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) plugin, which lets OpenCode use your Claude subscription (Pro/Team/Enterprise) via OAuth tokens.
+
+**First-time setup:**
+
+```bash
+./claude-auth
+```
+
+This spins up a temporary container, runs `claude auth login`, and walks you through the OAuth flow:
+
+1. A URL is printed in the terminal
+2. Open the URL in your browser and authorize
+3. Paste the code back into the terminal
+4. Credentials are saved to `data/.claude/.credentials.json`
+
+**Other commands:**
+
+```bash
+./claude-auth status   # Check if credentials are valid
+./claude-auth logout   # Remove credentials
+```
+
+**How it works:** The `opencode-claude-auth` plugin reads OAuth tokens from `~/.claude/.credentials.json` (which maps to `data/.claude/.credentials.json` on the host), injects them into OpenCode's API requests, and auto-refreshes tokens when they near expiry by invoking the `claude` CLI.
+
+**Credential persistence:** Since `data/` is mounted as the container's home directory, credentials survive container restarts. No additional volume mounts are needed.
+
+**Alternative — API key auth:** If you have an Anthropic API key and don't need subscription-based OAuth, set `OPENCODE_API_KEY` in your environment. The plugin becomes a no-op and falls through to standard API key auth.
+
 ### oh-my-opencode
 
 The [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin is pre-installed in the Docker image and provides multi-agent orchestration (Sisyphus, Hephaestus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and the `ultrawork` command.
@@ -71,6 +110,8 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 .
 ├── build           # Script to build the Docker image
 ├── ocd             # Script to run the container
+├── claude-auth     # Script to manage Claude Code authentication
+├── clearcache      # Script to clear caches (preserves credentials)
 ├── config/         # OpenCode configuration
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
@@ -79,6 +120,7 @@ Agent model assignments are configured in `config/oh-my-opencode.json`. Like the
 │   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
 │   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
 ├── data/           # Persistent home directory (mounted to /home/coder)
+│   └── .claude/    # Claude Code data (credentials, transcripts)
 └── Dockerfile      # Container definition
 ```
 

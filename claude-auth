@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Get the actual script location (resolving symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$SCRIPT_DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+# Configuration
+IMAGE_NAME="ocd:latest"
+CONTAINER_NAME="ocd-claude-auth-$$"
+DATA_DIR="${SCRIPT_DIR}/data"
+CRED_FILE="${DATA_DIR}/.claude/.credentials.json"
+
+usage() {
+    cat <<'EOF'
+Usage: ./claude-auth [command]
+
+Manage Claude Code authentication for the OCD container.
+
+Commands:
+  login     Authenticate with Claude (default if no command given)
+  status    Check current authentication status
+  logout    Remove Claude credentials
+
+The OAuth flow will print a URL — open it in your browser, authorize,
+and paste the code back into the terminal.
+
+Credentials are stored in data/.claude/.credentials.json and persist
+across container restarts.
+EOF
+}
+
+check_image() {
+    if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+        echo "Error: Image '${IMAGE_NAME}' not found."
+        echo "Please run ./build first to build the image."
+        exit 1
+    fi
+}
+
+run_claude_auth() {
+    local cmd="$1"
+    check_image
+
+    echo "Starting temporary container for Claude auth..."
+    docker run -it \
+        --rm \
+        --name "${CONTAINER_NAME}" \
+        --network host \
+        -v "${DATA_DIR}:/home/coder:rw" \
+        -w /tmp \
+        -e HOME=/home/coder \
+        --security-opt no-new-privileges:true \
+        --cap-drop ALL \
+        "${IMAGE_NAME}" \
+        claude auth "${cmd}"
+}
+
+# Parse command
+CMD="${1:-login}"
+
+case "$CMD" in
+    login)
+        run_claude_auth login
+        if [ -f "$CRED_FILE" ]; then
+            echo ""
+            echo "Authentication successful! Credentials saved to data/.claude/.credentials.json"
+            echo "The opencode-claude-auth plugin will pick these up automatically."
+        fi
+        ;;
+    status)
+        run_claude_auth status
+        if [ -f "$CRED_FILE" ]; then
+            echo ""
+            echo "Credential file exists: data/.claude/.credentials.json"
+        else
+            echo ""
+            echo "No credential file found. Run ./claude-auth login to authenticate."
+        fi
+        ;;
+    logout)
+        run_claude_auth logout
+        if [ -f "$CRED_FILE" ]; then
+            rm -f "$CRED_FILE"
+            echo "Removed data/.claude/.credentials.json"
+        fi
+        echo "Claude credentials cleared."
+        ;;
+    -h|--help|help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown command: $CMD" >&2
+        echo ""
+        usage >&2
+        exit 1
+        ;;
+esac
