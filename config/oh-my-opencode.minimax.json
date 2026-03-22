@@ -3,17 +3,20 @@
 
   "agents": {
     "sisyphus": {
-      "model": "openai/gpt-5.4"
+      "model": "minimax/MiniMax-M2.7",
+      "fallback_models": ["openai/gpt-5.4"]
     },
     "atlas": {
-      "model": "openai/gpt-5.2"
+      "model": "minimax/MiniMax-M2.5",
+      "fallback_models": ["openai/gpt-5.4"]
     },
     "prometheus": {
       "model": "openai/gpt-5.4",
       "reasoningEffort": "high"
     },
     "metis": {
-      "model": "openai/gpt-5.4"
+      "model": "minimax/MiniMax-M2.7",
+      "fallback_models": ["openai/gpt-5.4"]
     },
     "momus": {
       "model": "openai/gpt-5.4",
@@ -53,27 +56,27 @@
       "reasoningEffort": "high"
     },
     "unspecified-low": {
-      "model": "openai/gpt-5.2"
+      "model": "minimax/MiniMax-M2.5"
     },
     "unspecified-high": {
-      "model": "openai/gpt-5.4"
+      "model": "minimax/MiniMax-M2.7"
     },
     "writing": {
-      "model": "openai/gpt-5.4"
+      "model": "minimax/MiniMax-M2.7"
     },
     "visual-engineering": {
       "model": "openai/gpt-5.4",
       "reasoningEffort": "medium"
     },
-    "artistry": {
+    "artistry": { 
       "model": "openai/gpt-5.4",
       "reasoningEffort": "high"
     }
   },
 
   "background_task": {
-    "providerConcurrency": { "openai": 20, "opencode": 3 },
-    "modelConcurrency": { "openai/gpt-5.2": 20 }
+    "providerConcurrency": { "minimax": 10, "openai": 10, "opencode": 3 },
+    "modelConcurrency": { "minimax/MiniMax-M2.7": 2, "openai/gpt-5.2": 20 }
   },
 
   "disabled_skills": [

@@ -77,14 +77,16 @@ Switch models via `--profile` flag:
 
 ```bash
 ./ocd --profile anthropic    # Use Anthropic Claude models
-./ocd                        # Use default MiniMax models
+./ocd                        # Use default OpenAI models
+./ocd --profile minimax      # Use MiniMax models
 ```
 
 **Available profiles:**
 
 | Profile | Description |
 |---------|-------------|
-| (default) | Uses MiniMax models for most agents |
+| (default) | Uses OpenAI models exclusively |
+| `minimax` | Uses MiniMax models for most agents (with OpenAI fallbacks) |
 | `anthropic` | Uses Anthropic Claude models (requires Claude Code OAuth or API key) |
 
 To create a new profile, copy `config/oh-my-opencode.json` to `config/oh-my-opencode.<profile>.json` and modify the model assignments.
@@ -101,7 +103,8 @@ To create a new profile, copy `config/oh-my-opencode.json` to `config/oh-my-open
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
 │   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
-│   ├── oh-my-opencode.json        # oh-my-opencode default config (committed)
+│   ├── oh-my-opencode.json        # oh-my-opencode default config — OpenAI only (committed)
+│   ├── oh-my-opencode.minimax.json   # oh-my-opencode MiniMax profile (committed)
 │   ├── oh-my-opencode.anthropic.json # oh-my-opencode Anthropic profile (committed)
 │   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
 │   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
