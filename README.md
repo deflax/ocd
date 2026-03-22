@@ -76,9 +76,9 @@ Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Libr
 Switch models via `--profile` flag:
 
 ```bash
-./ocd --profile anthropic    # Use Anthropic Claude models
 ./ocd                        # Use default OpenAI models
 ./ocd --profile minimax      # Use MiniMax models
+./ocd --profile anthropic    # Use Anthropic Claude models
 ```
 
 **Available profiles:**
