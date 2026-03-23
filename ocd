@@ -140,7 +140,7 @@ if [ "$WEB_MODE" = true ]; then
         WEB_PORT=$((WEB_PORT + 1))
     done
 
-    OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
+    OPENCODE_CMD=(web --hostname 0.0.0.0 --port "${WEB_PORT}")
 
     if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
         echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
