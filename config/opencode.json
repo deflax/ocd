@@ -34,8 +34,8 @@
       "grep *": "allow",
       "rg *": "allow",
       "ag *": "allow",
-      "sed *": "ask",
-      "awk *": "ask",
+      "sed *": "allow",
+      "awk *": "allow",
       "sort *": "allow",
       "uniq *": "allow",
       "diff *": "allow",
@@ -46,6 +46,7 @@
       "git log *": "allow",
       "git branch *": "allow",
       "git show *": "allow",
+      "git push *": "deny",
       "git stash list *": "allow",
       "git remote *": "allow",
       "git tag *": "allow",
@@ -80,7 +81,7 @@
       "date *": "allow",
       "whoami *": "allow",
       "uname *": "allow",
-      "xargs *": "ask",
+      "xargs *": "allow",
       "sudo *": "deny",
       "su *": "deny"
     }
