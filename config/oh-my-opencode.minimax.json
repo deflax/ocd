@@ -32,10 +32,10 @@
       "fallback_models": ["openai/gpt-5.4"]
     },
     "librarian": {
-      "model": "openai/gpt-5.2"
+      "model": "openai/gpt-5.4-mini"
     },
     "explore": {
-      "model": "openai/gpt-5.2"
+      "model": "openai/gpt-5.4-mini"
     },
     "multimodal-looker": {
       "model": "openai/gpt-5.4",
@@ -44,7 +44,7 @@
   },
   "categories": {
     "quick": {
-      "model": "openai/gpt-5.2"
+      "model": "openai/gpt-5.4-mini"
     },
     "deep": {
       "model": "openai/gpt-5.3-codex",
@@ -76,7 +76,7 @@
 
   "background_task": {
     "providerConcurrency": { "minimax": 10, "openai": 10, "opencode": 3 },
-    "modelConcurrency": { "minimax/MiniMax-M2.7": 2, "openai/gpt-5.2": 20 }
+    "modelConcurrency": { "minimax/MiniMax-M2.7": 2, "openai/gpt-5.4-mini": 20 }
   },
 
   "disabled_skills": [
