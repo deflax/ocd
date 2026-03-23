@@ -133,6 +133,13 @@ fi
 
 # Web mode: configure command (network is always --network host for Ollama compatibility)
 if [ "$WEB_MODE" = true ]; then
+    # Auto-detect available port if the requested one is in use
+    while ss -tln 2>/dev/null | grep -q ":${WEB_PORT}\b" \
+       || docker ps --format '{{.Ports}}' 2>/dev/null | grep -q ":${WEB_PORT}->"; do
+        echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
+        WEB_PORT=$((WEB_PORT + 1))
+    done
+
     OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
 
     if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then

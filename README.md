@@ -103,6 +103,8 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ./ocd --web --profile anthropic      # Combine with model profiles
 ```
 
+**Port auto-detection:** If the default port is already in use (e.g., another `ocd --web` instance), it automatically finds the next available port and prints which one it chose.
+
 **Authentication (optional):** Set `OPENCODE_SERVER_PASSWORD` to require basic auth:
 ```bash
 OPENCODE_SERVER_PASSWORD=secret ./ocd --web
