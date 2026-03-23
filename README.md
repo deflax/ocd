@@ -11,12 +11,14 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
 - [Claude Code](https://github.com/anthropics/claude-code) OAuth token support (use your Pro/Max subscription)
 - [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin for multi-agent orchestration
+- Web UI mode for browser-based access
 
 ## Quick Start
 
 1. **Build the image:** `./build`
 2. **Set up Claude auth (first time):** `./claude-auth setup-token` → opens browser for authorization, saves token to `.claude-token` (~1 year validity)
 3. **Run the container:** `./ocd`
+4. **Or start in web mode:** `./ocd --web` → opens web UI at http://localhost:4096
 
 **Optional:** Symlink to run from anywhere:
 ```bash
@@ -90,6 +92,30 @@ Switch models via `--profile` flag:
 | `anthropic` | Uses Anthropic Claude models (requires Claude Code OAuth or API key) |
 
 To create a new profile, copy `config/oh-my-opencode.json` to `config/oh-my-opencode.<profile>.json` and modify the model assignments.
+
+### Web Mode
+
+Start OpenCode with a browser-based UI instead of the terminal TUI:
+
+```bash
+./ocd --web                          # Web UI on http://localhost:4096
+./ocd --web --port 8080              # Custom port
+./ocd --web --profile anthropic      # Combine with model profiles
+```
+
+**Authentication (optional):** Set `OPENCODE_SERVER_PASSWORD` to require basic auth:
+```bash
+OPENCODE_SERVER_PASSWORD=secret ./ocd --web
+```
+Username defaults to `opencode` (override with `OPENCODE_SERVER_USERNAME`).
+
+**Environment variables:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OCD_WEB_PORT` | Default web port (overridden by `--port`) | `4096` |
+| `OPENCODE_SERVER_PASSWORD` | Basic auth password | (none — unauthenticated) |
+| `OPENCODE_SERVER_USERNAME` | Basic auth username | `opencode` |
 
 ## Directory Structure
 

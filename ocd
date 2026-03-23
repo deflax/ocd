@@ -14,8 +14,10 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 # Get the current working directory (where script is run from)
 CURRENT_DIR="$(pwd)"
 
-# Parse --profile flag (must come before any Docker args)
+# Parse flags (must come before any Docker args)
 OMO_PROFILE=""
+WEB_MODE=false
+WEB_PORT="${OCD_WEB_PORT:-4096}"
 DOCKER_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -25,6 +27,19 @@ while [[ $# -gt 0 ]]; do
                 shift 2
             else
                 echo "Error: --profile requires a value (e.g., --profile anthropic)"
+                exit 1
+            fi
+            ;;
+        --web)
+            WEB_MODE=true
+            shift
+            ;;
+        --port)
+            if [[ -n "${2:-}" ]]; then
+                WEB_PORT="$2"
+                shift 2
+            else
+                echo "Error: --port requires a value (e.g., --port 4096)"
                 exit 1
             fi
             ;;
@@ -116,8 +131,24 @@ if [ -d /tmp/.X11-unix ]; then
     X11_MOUNT=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
 fi
 
+# Web mode: configure command (network is always --network host for Ollama compatibility)
+if [ "$WEB_MODE" = true ]; then
+    OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
+
+    if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
+        echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
+        echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --web"
+    fi
+else
+    OPENCODE_CMD=("$@")
+fi
+
 # Run the container
-echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace. Script is run from ${SCRIPT_DIR}"
+if [ "$WEB_MODE" = true ]; then
+    echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}')"
+else
+    echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace."
+fi
 docker run -it \
     --rm \
     --name "${CONTAINER_NAME}" \
@@ -134,10 +165,12 @@ docker run -it \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     -e OPENCODE_CONFIG_DIR=/config \
+    -e OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD:-}" \
+    -e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME:-}" \
     --security-opt no-new-privileges:true \
     --cap-drop ALL \
     --cap-add CHOWN \
     --cap-add SETUID \
     --cap-add SETGID \
     "${IMAGE_NAME}" \
-    "$@"
+    "${OPENCODE_CMD[@]}"
