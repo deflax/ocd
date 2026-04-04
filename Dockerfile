@@ -1,5 +1,5 @@
 # Dockerfile for custom OpenCode Isolated Runner
-FROM ghcr.io/anomalyco/opencode:latest
+FROM debian:trixie-slim
 LABEL maintainer="Local Code Runner"
 LABEL description="Isolated environment for OpenCode"
 
@@ -10,7 +10,7 @@ ARG GID=1000
 USER root
 
 # Install core tools
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     git \
@@ -26,16 +26,16 @@ RUN apk add --no-cache \
     wl-clipboard \
     # Python
     python3 \
-    py3-pip \
-    py3-virtualenv \
+    python3-pip \
+    python3-venv \
     # Node.js
     nodejs \
     npm \
     # Go
-    go \
+    golang-go \
     # Build toolchain
     gcc \
-    musl-dev \
+    libc6-dev \
     make \
     # CLI essentials
     jq \
@@ -44,61 +44,48 @@ RUN apk add --no-cache \
     file \
     zip \
     diffutils \
-    fd \
+    fd-find \
     patch \
     tar \
-    # glibc compat layer (needed for ast-grep CLI which has no musl binary)
-    gcompat \
     gzip \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/fdfind /usr/local/bin/fd
+
+ENV OPENCODE_INSTALL_DIR=/usr/local/bin
+RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path \
+    && command -v opencode >/dev/null
 
 # Create 'coder' user with configurable UID/GID, handling conflicts
 RUN set -e; \
-    # Check if GID already exists
     EXISTING_GROUP=$(getent group ${GID} | cut -d: -f1 || echo ""); \
     if [ -z "$EXISTING_GROUP" ]; then \
-        # GID is free, create new group
-        addgroup -g ${GID} coder; \
+        groupadd -g ${GID} coder; \
         GROUP_NAME="coder"; \
     else \
-        # GID exists, check if it's already 'coder'
         if [ "$EXISTING_GROUP" = "coder" ]; then \
             GROUP_NAME="coder"; \
         else \
-            # Use existing group and add coder as secondary group
-            echo "GID ${GID} exists as '$EXISTING_GROUP', creating coder group with auto GID"; \
-            addgroup coder; \
-            GROUP_NAME="coder"; \
+            echo "GID ${GID} already exists as '$EXISTING_GROUP'; refusing to create mismatched primary group for coder" >&2; \
+            exit 1; \
         fi; \
     fi; \
-    # Check if UID already exists
     EXISTING_USER=$(getent passwd ${UID} | cut -d: -f1 || echo ""); \
     if [ -z "$EXISTING_USER" ]; then \
-        # UID is free, create new user
-        adduser -D -u ${UID} -G ${GROUP_NAME} -h /home/coder -s /bin/bash coder; \
+        useradd -m -u ${UID} -g ${GROUP_NAME} -s /bin/bash coder; \
     else \
-        # UID exists
         if [ "$EXISTING_USER" = "coder" ]; then \
             echo "User 'coder' already exists with UID ${UID}"; \
         else \
-            echo "UID ${UID} exists as '$EXISTING_USER', creating coder with auto UID"; \
-            adduser -D -G ${GROUP_NAME} -h /home/coder -s /bin/bash coder; \
+            echo "UID ${UID} already exists as '$EXISTING_USER'; refusing to create coder with a different UID" >&2; \
+            exit 1; \
         fi; \
-    fi; \
-    # If we used an existing system group, add coder to it
-    if [ -n "$EXISTING_GROUP" ] && [ "$EXISTING_GROUP" != "coder" ]; then \
-        addgroup coder ${EXISTING_GROUP}; \
     fi
 
 # Install oh-my-opencode plugin globally
-# --ignore-scripts: @ast-grep/cli postinstall fails on Alpine/musl (no musl binary published)
 RUN npm install -g oh-my-opencode@latest --ignore-scripts
 
 # Install Claude Code CLI and opencode-claude-auth plugin
 RUN npm install -g @anthropic-ai/claude-code opencode-claude-auth
-
-# Alpine musl: use system ripgrep instead of bundled one
-ENV USE_BUILTIN_RIPGREP=0
 
 # Install language servers
 RUN npm install -g @vue/language-server @biomejs/biome
@@ -111,7 +98,6 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir \
 
 ENV PATH="/home/coder/.local/bin:${PATH}"
 
-# Install ast-grep CLI manually from GitHub releases (glibc binary via gcompat)
 ARG AST_GREP_VERSION=0.41.0
 RUN set -e; \
     ARCH="$(uname -m)"; \
@@ -128,3 +114,4 @@ RUN set -e; \
 
 USER coder
 WORKDIR /workspace
+ENTRYPOINT ["opencode"]
