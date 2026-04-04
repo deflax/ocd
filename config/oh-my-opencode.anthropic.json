@@ -4,72 +4,91 @@
   "agents": {
     "sisyphus": {
       "model": "anthropic/claude-opus-4-6",
-      "fallback_models": ["openai/gpt-5.4"]
+      "fallback_models": ["openai/gpt-5.4"],
+      "prompt_append": "Prefer the simplest solution that fully satisfies the user's request. Never over-engineer. Keep code simple, clean, correct, and secure. When user intent is genuinely unclear and the ambiguity would materially change the implementation, ask one focused clarifying question using the question tool. If a reasonable default assumption would lead to a similar amount of work, proceed with that assumption and state it briefly."
     },
     "atlas": {
-      "model": "openai/gpt-5.4"
+      "model": "openai/gpt-5.4",
+      "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep outputs simple, clean, correct, and secure."
     },
     "prometheus": {
       "model": "openai/gpt-5.4",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "prompt_append": "Never over-engineer. Prefer the simplest plan that fully satisfies the task. Keep proposed solutions simple, clean, correct, and secure."
     },
     "metis": {
       "model": "anthropic/claude-opus-4-6",
-      "fallback_models": ["openai/gpt-5.4"]
+      "fallback_models": ["openai/gpt-5.4"],
+      "prompt_append": "Never over-engineer. Prefer the simplest interpretation and recommendation that fully satisfies the task. Keep outputs simple, correct, and secure."
     },
     "momus": {
       "model": "openai/gpt-5.4",
-      "reasoningEffort": "medium"
+      "reasoningEffort": "high",
+      "prompt_append": "Never reward over-engineering. Favor the simplest clear, correct, and secure plans and implementations that fully satisfy the task."
     },
     "oracle": {
       "model": "openai/gpt-5.4",
       "reasoningEffort": "high",
-      "textVerbosity": "medium"
+      "textVerbosity": "medium",
+      "prompt_append": "Never recommend over-engineering. Favor the simplest clean, correct, and secure solution that fully satisfies the task, unless complexity is truly required."
     },
     "hephaestus": {
       "model": "openai/gpt-5.3-codex",
-      "fallback_models": ["openai/gpt-5.4"]
+      "fallback_models": ["openai/gpt-5.4"],
+      "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep code simple, clean, correct, and secure."
     },
     "librarian": {
-      "model": "openai/gpt-5.4-mini"
+      "model": "openai/gpt-5.4-mini",
+      "prompt_append": "Do not bias toward over-engineered patterns. Prefer references and guidance that are simple, clean, correct, and secure."
     },
     "explore": {
-      "model": "openai/gpt-5.4-mini"
+      "model": "openai/gpt-5.4-mini",
+      "temperature": 0.2,
+      "prompt_append": "Do not favor over-engineered approaches when summarizing patterns. Highlight the simplest clean, correct, and secure approaches that fully satisfy the task."
     },
     "multimodal-looker": {
       "model": "openai/gpt-5.4",
-      "fallback_models": ["openai/gpt-5.3-codex"]
+      "fallback_models": ["openai/gpt-5.3-codex"],
+      "prompt_append": "Never over-engineer. Keep interpretations simple, clear, correct, and secure. Do not introduce unnecessary complexity in recommendations."
     }
   },
   "categories": {
     "quick": {
-      "model": "openai/gpt-5.4-mini"
+      "model": "openai/gpt-5.4-mini",
+      "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep outputs simple, clean, correct, and secure."
     },
     "deep": {
       "model": "openai/gpt-5.3-codex",
       "reasoningEffort": "high",
-      "fallback_models": ["openai/gpt-5.4"]
+      "fallback_models": ["openai/gpt-5.4"],
+      "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep outputs simple, clean, correct, and secure unless complexity is truly required."
     },
     "ultrabrain": {
       "model": "openai/gpt-5.4",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "prompt_append": "Never over-engineer. Even for hard problems, favor the simplest correct and secure solution that fully satisfies the task."
     },
     "unspecified-low": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "anthropic/claude-sonnet-4-6",
+      "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep outputs simple, clean, correct, and secure."
     },
     "unspecified-high": {
-      "model": "anthropic/claude-opus-4-6"
+      "model": "anthropic/claude-opus-4-6",
+      "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep outputs simple, clean, correct, and secure unless complexity is truly required."
     },
     "writing": {
-      "model": "anthropic/claude-opus-4-6"
+      "model": "anthropic/claude-opus-4-6",
+      "prompt_append": "Never over-engineer. Prefer clear, simple, correct, and security-conscious writing that fully satisfies the task."
     },
     "visual-engineering": {
       "model": "openai/gpt-5.4",
-      "reasoningEffort": "medium"
+      "reasoningEffort": "medium",
+      "prompt_append": "Never over-engineer. Prefer the simplest design and implementation that fully satisfies the task while staying clean, correct, and secure."
     },
     "artistry": {
       "model": "openai/gpt-5.4",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "prompt_append": "Never over-engineer unless the creative solution genuinely requires complexity. Favor the simplest clean, correct, and secure approach."
     }
   },
 
