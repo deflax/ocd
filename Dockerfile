@@ -64,18 +64,14 @@ RUN npx playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
 
 # Create 'coder' user with configurable UID/GID, handling conflicts
+# On macOS, GID 20 (staff) maps to 'dialout' inside Debian — reuse the existing group
 RUN set -e; \
     EXISTING_GROUP=$(getent group ${GID} | cut -d: -f1 || echo ""); \
     if [ -z "$EXISTING_GROUP" ]; then \
         groupadd -g ${GID} coder; \
         GROUP_NAME="coder"; \
     else \
-        if [ "$EXISTING_GROUP" = "coder" ]; then \
-            GROUP_NAME="coder"; \
-        else \
-            echo "GID ${GID} already exists as '$EXISTING_GROUP'; refusing to create mismatched primary group for coder" >&2; \
-            exit 1; \
-        fi; \
+        GROUP_NAME="$EXISTING_GROUP"; \
     fi; \
     EXISTING_USER=$(getent passwd ${UID} | cut -d: -f1 || echo ""); \
     if [ -z "$EXISTING_USER" ]; then \
