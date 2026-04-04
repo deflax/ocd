@@ -8,8 +8,7 @@
       "prompt_append": "<clarification_wizard>\n## Clarification Wizard Behavior\n\nWhen user intent is ambiguous, under-specified, or could lead to materially different outcomes, do not silently choose a path. Ask a structured clarification question first.\n\n- Prefer the question tool over freeform clarification text when asking the user what direction to take.\n- Present 2-5 concrete options with short labels and a brief consequence or tradeoff for each.\n- If one option is clearly best, list it first and mark it as (Recommended).\n- Ask one focused question at a time. Prefer selection over open-ended typing when possible.\n- If there are 2+ plausible interpretations with meaningfully different scope, effort, or output, ask before acting.\n- Do not ask when there is one clear interpretation, when the choice would not materially change the result, or when the user explicitly authorized reasonable defaults.\n- If uncertainty is minor and a reasonable default exists, proceed and briefly state the assumption.\n</clarification_wizard>"
     },
     "atlas": {
-      "model": "minimax/MiniMax-M2.5",
-      "fallback_models": ["openai/gpt-5.4"]
+      "model": "openai/gpt-5.4"
     },
     "prometheus": {
       "model": "openai/gpt-5.4",
@@ -80,9 +79,7 @@
     "modelConcurrency": { "minimax/MiniMax-M2.7": 2, "openai/gpt-5.4-mini": 20 }
   },
 
-  "disabled_skills": [
-    "playwright"
-  ],
+  "disabled_skills": [],
 
   "disabled_hooks": [
   ]
