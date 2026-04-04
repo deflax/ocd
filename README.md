@@ -10,7 +10,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
 - [Claude Code](https://github.com/anthropics/claude-code) OAuth token support (use your Pro/Max subscription)
-- [oh-my-opencode](https://github.com/code-yeongyu/oh-my-opencode) plugin for multi-agent orchestration
+- [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Web UI mode for browser-based access
 
 ## Quick Start
@@ -32,7 +32,7 @@ ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 | `config/opencode.json` | Base config |
 | `config/opencode.local.json` | Local overrides (gitignored) |
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
-| `config/oh-my-opencode.*.json` | Model profiles (see below) |
+| `config/oh-my-openagent.*.json` | Model profiles (see below) |
 | `data/` | Persistent home directory |
 
 ### Local Config Overrides
@@ -69,7 +69,7 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 
 **API key alternative:** Set `OPENCODE_API_KEY` instead.
 
-### oh-my-opencode
+### oh-my-openagent
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
 
@@ -91,7 +91,7 @@ Switch models via `--profile` flag:
 | `minimax` | Uses MiniMax models for most agents (with OpenAI fallbacks) |
 | `anthropic` | Uses Anthropic Claude models (requires Claude Code OAuth or API key) |
 
-To create a new profile, copy `config/oh-my-opencode.json` to `config/oh-my-opencode.<profile>.json` and modify the model assignments.
+To create a new profile, copy `config/oh-my-openagent.json` to `config/oh-my-openagent.<profile>.json` and modify the model assignments.
 
 ### Web Mode
 
@@ -127,15 +127,15 @@ Username defaults to `opencode` (override with `OPENCODE_SERVER_USERNAME`).
 ├── ocd             # Run the container
 ├── claude-auth     # Manage Claude auth
 ├── clearcache      # Clear caches (preserves credentials)
-├── config/         # OpenCode and oh-my-opencode configs
+├── config/         # OpenCode and oh-my-openagent configs
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
 │   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
-│   ├── oh-my-opencode.json        # oh-my-opencode default config — OpenAI only (committed)
-│   ├── oh-my-opencode.minimax.json   # oh-my-opencode MiniMax profile (committed)
-│   ├── oh-my-opencode.anthropic.json # oh-my-opencode Anthropic profile (committed)
-│   ├── oh-my-opencode.local.json  # oh-my-opencode local overrides (gitignored, optional)
-│   └── oh-my-opencode.merged.json # oh-my-opencode merged result (gitignored, auto-generated)
+│   ├── oh-my-openagent.json        # oh-my-openagent default config — OpenAI only (committed)
+│   ├── oh-my-openagent.minimax.json   # oh-my-openagent MiniMax profile (committed)
+│   ├── oh-my-openagent.anthropic.json # oh-my-openagent Anthropic profile (committed)
+│   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
+│   └── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
 ├── data/           # Persistent home (mounted to /home/coder)
 │   └── .claude/    # Claude credentials (auto-seeded by ocd, gitignored)
 ├── .claude-token   # OAuth token (gitignored, created by claude-auth)

@@ -17,11 +17,11 @@ usage() {
   cat <<'EOF'
 Usage: ./clearcache [--dry-run]
 
-Clears all OpenCode/oh-my-opencode cache and package-manager caches.
+Clears all OpenCode/oh-my-openagent cache and package-manager caches.
 
 Removes:
   data/.cache/opencode/       Cached models list, node_modules, tmp files
-  data/.cache/oh-my-opencode/ Cached provider info, downloaded binaries, tmp files
+  data/.cache/oh-my-openagent/ Cached provider info, downloaded binaries, tmp files
   data/.cache/pip/            pip download cache
   data/.npm/_cacache/         npm content-addressable cache
   data/.npm/_logs/            npm log files
@@ -61,8 +61,8 @@ done
 declare -a TARGETS=(
   # OpenCode cache (models list, node_modules, lock files, tmp)
   "${DATA_DIR}/.cache/opencode"
-  # oh-my-opencode cache (provider info, downloaded binaries, tmp)
-  "${DATA_DIR}/.cache/oh-my-opencode"
+  # oh-my-openagent cache (provider info, downloaded binaries, tmp)
+  "${DATA_DIR}/.cache/oh-my-openagent"
   # pip download cache
   "${DATA_DIR}/.cache/pip"
   # npm caches (content-addressable store, logs, npx)

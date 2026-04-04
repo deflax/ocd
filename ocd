@@ -77,34 +77,34 @@ if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
     OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
 fi
 
-# oh-my-opencode config: select base config based on --profile flag.
-# Available profiles are files named oh-my-opencode.<profile>.json in config/.
-# Default (no --profile) uses oh-my-opencode.json.
+# oh-my-openagent config: select base config based on --profile flag.
+# Available profiles are files named oh-my-openagent.<profile>.json in config/.
+# Default (no --profile) uses oh-my-openagent.json.
 # NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
 if [ -n "$OMO_PROFILE" ]; then
-    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode.${OMO_PROFILE}.json"
+    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.${OMO_PROFILE}.json"
     if [ ! -f "$OMO_BASE_CONFIG" ]; then
         echo "Error: Profile '${OMO_PROFILE}' not found (expected ${OMO_BASE_CONFIG})"
         echo "Available profiles:"
-        for f in "${SCRIPT_DIR}"/config/oh-my-opencode.*.json; do
+        for f in "${SCRIPT_DIR}"/config/oh-my-openagent.*.json; do
             [ -f "$f" ] || continue
-            basename "$f" | sed 's/^oh-my-opencode\.//; s/\.json$//'  | grep -v '^local$\|^merged$'
+            basename "$f" | sed 's/^oh-my-openagent\.//; s/\.json$//'  | grep -v '^local$\|^merged$'
         done
         exit 1
     fi
-    echo "Using oh-my-opencode profile: ${OMO_PROFILE}"
+    echo "Using oh-my-openagent profile: ${OMO_PROFILE}"
 else
-    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode.json"
+    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.json"
 fi
 
 OMO_CONFIG_HOST="$OMO_BASE_CONFIG"
-if [ -f "${SCRIPT_DIR}/config/oh-my-opencode.local.json" ]; then
-    echo "Merging oh-my-opencode.local.json into $(basename "$OMO_BASE_CONFIG")..."
+if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
+    echo "Merging oh-my-openagent.local.json into $(basename "$OMO_BASE_CONFIG")..."
     jq -s '.[0] * .[1]' \
         "$OMO_BASE_CONFIG" \
-        "${SCRIPT_DIR}/config/oh-my-opencode.local.json" \
-        > "${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
-    OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-opencode.merged.json"
+        "${SCRIPT_DIR}/config/oh-my-openagent.local.json" \
+        > "${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
+    OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
 fi
 
 # Claude Code OAuth token: read from .claude-token file or env var,
@@ -162,7 +162,7 @@ docker run -it \
     --network host \
     -v "${SCRIPT_DIR}/data:/home/coder:rw" \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
-    -v "${OMO_CONFIG_HOST}:/config/oh-my-opencode.json:ro" \
+    -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
     -v "${CURRENT_DIR}:/workspace:rw" \
     "${X11_MOUNT[@]}" \
     -w /workspace \
