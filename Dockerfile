@@ -24,20 +24,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-utils \
     xclip \
     wl-clipboard \
-    # Python
     python3 \
     python3-pip \
     python3-venv \
-    # Node.js
-    nodejs \
-    npm \
-    # Go
     golang-go \
-    # Build toolchain
     gcc \
     libc6-dev \
     make \
-    # CLI essentials
     jq \
     yq \
     tree \
@@ -51,9 +44,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/fdfind /usr/local/bin/fd
 
-ENV OPENCODE_INSTALL_DIR=/usr/local/bin
-RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path \
-    && command -v opencode >/dev/null
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g \
+    opencode-ai \
+    @anthropic-ai/claude-code \
+    @ast-grep/cli \
+    @biomejs/biome \
+    @vue/language-server \
+    intelephense \
+    playwright \
+    typescript \
+    typescript-language-server
 
 # Create 'coder' user with configurable UID/GID, handling conflicts
 RUN set -e; \
@@ -81,15 +85,6 @@ RUN set -e; \
         fi; \
     fi
 
-# Install oh-my-opencode plugin globally
-RUN npm install -g oh-my-opencode@latest --ignore-scripts
-
-# Install Claude Code CLI and opencode-claude-auth plugin
-RUN npm install -g @anthropic-ai/claude-code opencode-claude-auth
-
-# Install language servers
-RUN npm install -g @vue/language-server @biomejs/biome
-
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
     basedpyright \
     pytest \
@@ -97,20 +92,6 @@ RUN python3 -m pip install --break-system-packages --no-cache-dir \
     fastapi
 
 ENV PATH="/home/coder/.local/bin:${PATH}"
-
-ARG AST_GREP_VERSION=0.41.0
-RUN set -e; \
-    ARCH="$(uname -m)"; \
-    case "$ARCH" in \
-        x86_64) TARGET="x86_64-unknown-linux-gnu" ;; \
-        aarch64) TARGET="aarch64-unknown-linux-gnu" ;; \
-        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
-    esac; \
-    curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/app-${TARGET}.zip" -o /tmp/ast-grep.zip && \
-    unzip -o /tmp/ast-grep.zip -d /tmp/ast-grep && \
-    install -m 755 "$(find /tmp/ast-grep -name 'sg' -type f | head -1)" /usr/local/bin/sg && \
-    ln -sf /usr/local/bin/sg /usr/local/bin/ast-grep && \
-    rm -rf /tmp/ast-grep /tmp/ast-grep.zip
 
 USER coder
 WORKDIR /workspace
