@@ -26,12 +26,14 @@ Removes:
   data/.npm/_cacache/         npm content-addressable cache
   data/.npm/_logs/            npm log files
   data/.npm/_npx/             npx execution cache
+  data/.config/opencode/node_modules   OpenCode plugin install dependencies
+  data/.local/share/opencode/bin/node_modules  OpenCode binary dependency cache
   data/.bun/install/          bun package install cache
 
 Preserves:
-  data/.config/               OpenCode plugin installs and settings
+  data/.config/               OpenCode settings and plugin metadata (except opencode/node_modules)
   data/.claude/               Session transcripts
-  data/.local/                User local bin/lib/share/state
+  data/.local/                User local bin/lib/share/state (except share/opencode/bin/node_modules)
   data/.terraform.d/          Terraform state
   config/                     All configuration (mounted read-only in container)
 
@@ -69,6 +71,8 @@ declare -a TARGETS=(
   "${DATA_DIR}/.npm/_cacache"
   "${DATA_DIR}/.npm/_logs"
   "${DATA_DIR}/.npm/_npx"
+  "${DATA_DIR}/.config/opencode/node_modules"
+  "${DATA_DIR}/.local/share/opencode/bin/node_modules"
   # bun package install cache
   "${DATA_DIR}/.bun/install"
 )
