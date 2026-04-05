@@ -81,6 +81,7 @@ Switch models via `--profile` flag:
 ./ocd                        # Use default OpenAI models
 ./ocd --profile minimax      # Use MiniMax models
 ./ocd --profile anthropic    # Use Anthropic Claude models
+./ocd --profile ollama       # Use local Ollama models only
 ```
 
 **Available profiles:**
@@ -90,6 +91,9 @@ Switch models via `--profile` flag:
 | (default) | Uses OpenAI models exclusively |
 | `minimax` | Uses MiniMax models for most agents (with OpenAI fallbacks) |
 | `anthropic` | Uses Anthropic Claude models (requires Claude Code OAuth or API key) |
+| `ollama` | Uses the local Ollama-only profile in `config/oh-my-openagent.ollama.json` with the Ollama provider from `config/opencode.json` |
+
+The committed Ollama profile maps all agents/categories to the local `gemma4:26b-16k` model by default.
 
 To create a new profile, copy `config/oh-my-openagent.json` to `config/oh-my-openagent.<profile>.json` and modify the model assignments.
 
@@ -134,6 +138,7 @@ Username defaults to `opencode` (override with `OPENCODE_SERVER_USERNAME`).
 │   ├── oh-my-openagent.json        # oh-my-openagent default config — OpenAI only (committed)
 │   ├── oh-my-openagent.minimax.json   # oh-my-openagent MiniMax profile (committed)
 │   ├── oh-my-openagent.anthropic.json # oh-my-openagent Anthropic profile (committed)
+│   ├── oh-my-openagent.ollama.json    # oh-my-openagent Ollama-only profile (committed)
 │   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
 │   └── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
 ├── data/           # Persistent home (mounted to /home/coder)
@@ -153,14 +158,16 @@ The `ocd` script:
 
 ## Self-Hosted Model Configuration
 
-For Ollama, increase context window size for large codebases:
+For Ollama, increase context window size for large codebases and save a larger-context variant of the model you want to use:
 
 ```bash
-$ ollama run qwen3:8b
+$ ollama run gemma4:26b
 >>> /set parameter num_ctx 16384
->>> /save qwen3:8b-16k
+>>> /save gemma4:26b-16k
 >>> /bye
 ```
+
+This matches the committed local profile in `config/oh-my-openagent.ollama.json` and the Ollama model entry in `config/opencode.json`.
 
 | Context Size | Use Case |
 |--------------|----------|

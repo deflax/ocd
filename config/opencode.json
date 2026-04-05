@@ -88,18 +88,17 @@
   },
   "provider": {
     "ollama": {
-      "npm": "@ai-sdk/openai-compatible@2.0.38",
+      "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
       "options": {
         "baseURL": "http://localhost:11434/v1",
         "num_ctx": 16384
       },
       "models": {   
-        "qwen3:14B-Q4_K_M-16k": {
-          "name": "qwen3:14B-Q4_K_M-16k",
-          "reasoning": false,
-          "tool_call": true
-        }
+	"gemma4:26b-16k": {
+	  "name": "gemma4:26b-16k",
+	  "tool_call": true
+	}
       }
     }
   },
