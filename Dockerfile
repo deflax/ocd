@@ -49,8 +49,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.3.13 \
-    @anthropic-ai/claude-code@2.1.92 \
+    opencode-ai@1.4.0 \
+    @anthropic-ai/claude-code@2.1.96 \
     @ast-grep/cli@0.42.1 \
     @biomejs/biome@2.4.10 \
     @vue/language-server@3.2.6 \
