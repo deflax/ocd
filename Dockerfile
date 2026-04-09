@@ -49,7 +49,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.4.0 \
+    opencode-ai@1.4.1 \
     @anthropic-ai/claude-code@2.1.96 \
     @ast-grep/cli \
     @biomejs/biome \
