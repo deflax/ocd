@@ -44,20 +44,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/fdfind /usr/local/bin/fd
 
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g --prefix /usr/local \
     opencode-ai@1.4.3 \
-    @anthropic-ai/claude-code@2.1.100 \
-    @ast-grep/cli \
-    @biomejs/biome \
-    @vue/language-server \
-    intelephense \
-    playwright \
-    typescript \
-    typescript-language-server
+    @anthropic-ai/claude-code@2.1.104 \
+    @ast-grep/cli@0.42.1 \
+    @biomejs/biome@2.4.11 \
+    @vue/language-server@3.2.6 \
+    intelephense@1.16.5 \
+    playwright@1.59.1 \
+    typescript@6.0.2 \
+    typescript-language-server@5.1.3
 
 # Install Playwright browsers with system dependencies (supports both amd64 and arm64)
 RUN npx playwright install --with-deps chromium \
@@ -87,8 +87,8 @@ RUN set -e; \
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
     basedpyright==1.39.0 \
-    pytest==9.0.2 \
-    pydantic==2.12.5 \
+    pytest==9.0.3 \
+    pydantic==2.13.0 \
     fastapi==0.135.3
 
 ENV PATH="/home/coder/.local/bin:${PATH}"

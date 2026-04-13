@@ -108,8 +108,8 @@
   },
   "plugin": [
     "opencode-claude-auth@1.4.9",
-    "oh-my-openagent@3.16.0",
+    "oh-my-openagent@3.17.2",
     "@tarquinen/opencode-dcp@3.1.9",
-    "@slkiser/opencode-quota@2.14.0"
+    "@slkiser/opencode-quota@2.16.0"
   ]
 }
