@@ -41,27 +41,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     patch \
     tar \
     gzip \
-    && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/fdfind /usr/local/bin/fd
 
+RUN python3 -m pip install --break-system-packages --no-cache-dir \
+    basedpyright
+
+RUN apt install -y \
+    python3-pytest \
+    python3-pydantic \
+    python3-fastapi
+
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends nodejs
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.4.6 \
+    opencode-ai@1.4.3 \
     @anthropic-ai/claude-code@2.1.110 \
-    @ast-grep/cli@0.42.1 \
-    @biomejs/biome@2.4.12 \
-    @vue/language-server@3.2.6 \
-    intelephense@1.16.5 \
-    playwright@1.59.1 \
-    typescript@6.0.2 \
-    typescript-language-server@5.1.3
+    @ast-grep/cli@latest \
+    @biomejs/biome@latest \
+    @vue/language-server@latest \
+    intelephense@latest \
+    playwright@latest \
+    typescript@latest \
+    typescript-language-server@latest
 
 # Install Playwright browsers with system dependencies (supports both amd64 and arm64)
-RUN npx playwright install --with-deps chromium \
-    && rm -rf /var/lib/apt/lists/*
+RUN npx playwright install --with-deps chromium
+
+RUN rm -rf /var/lib/apt/lists/*
 
 # Create 'coder' user with configurable UID/GID, handling conflicts
 # On macOS, GID 20 (staff) maps to 'dialout' inside Debian — reuse the existing group
@@ -84,12 +91,6 @@ RUN set -e; \
             exit 1; \
         fi; \
     fi
-
-RUN python3 -m pip install --break-system-packages --no-cache-dir \
-    basedpyright==1.39.1 \
-    pytest==9.0.3 \
-    pydantic==2.13.1 \
-    fastapi==0.136.0
 
 ENV PATH="/home/coder/.local/bin:${PATH}"
 
