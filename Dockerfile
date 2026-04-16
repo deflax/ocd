@@ -49,10 +49,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.4.3 \
-    @anthropic-ai/claude-code@2.1.104 \
+    opencode-ai@1.4.6 \
+    @anthropic-ai/claude-code@2.1.110 \
     @ast-grep/cli@0.42.1 \
-    @biomejs/biome@2.4.11 \
+    @biomejs/biome@2.4.12 \
     @vue/language-server@3.2.6 \
     intelephense@1.16.5 \
     playwright@1.59.1 \
@@ -86,10 +86,10 @@ RUN set -e; \
     fi
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
-    basedpyright==1.39.0 \
+    basedpyright==1.39.1 \
     pytest==9.0.3 \
-    pydantic==2.13.0 \
-    fastapi==0.135.3
+    pydantic==2.13.1 \
+    fastapi==0.136.0
 
 ENV PATH="/home/coder/.local/bin:${PATH}"
 

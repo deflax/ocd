@@ -51,12 +51,12 @@ do_setup_token() {
         elif command -v npx >/dev/null 2>&1; then
             echo "Claude CLI not found locally — running via npx (temporary, no install)..."
             echo ""
-            npx --yes @anthropic-ai/claude-code@2.1.104 setup-token
+            npx --yes @anthropic-ai/claude-code@2.1.110 setup-token
         else
             echo "Error: Neither 'claude' nor 'npx' found on this machine." >&2
             echo "" >&2
             echo "Install Node.js (which includes npx), then re-run this command." >&2
-            echo "Or install Claude CLI manually: npm install -g @anthropic-ai/claude-code@2.1.104" >&2
+            echo "Or install Claude CLI manually: npm install -g @anthropic-ai/claude-code@2.1.110" >&2
             exit 1
         fi
 
