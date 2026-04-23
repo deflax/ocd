@@ -34,7 +34,6 @@
     },
     "hephaestus": {
       "model": "openai/gpt-5.5",
-      "fallback_models": ["openai/gpt-5.5"],
       "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep code simple, clean, correct, and secure."
     },
     "librarian": {
@@ -48,7 +47,6 @@
     },
     "multimodal-looker": {
       "model": "openai/gpt-5.5",
-      "fallback_models": ["openai/gpt-5.5"],
       "prompt_append": "Never over-engineer. Keep interpretations simple, clear, correct, and secure. Do not introduce unnecessary complexity in recommendations."
     }
   },
@@ -60,7 +58,6 @@
     "deep": {
       "model": "openai/gpt-5.5",
       "reasoningEffort": "high",
-      "fallback_models": ["openai/gpt-5.5"],
       "prompt_append": "Never over-engineer. Prefer the simplest solution that fully satisfies the task. Keep outputs simple, clean, correct, and secure unless complexity is truly required."
     },
     "ultrabrain": {
