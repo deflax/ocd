@@ -45,6 +45,8 @@ Create `config/opencode.local.json` to override settings without committing:
 
 On startup, `ocd` deep-merges this on top of `opencode.json` using `jq`. The merged result is mounted read-only into the container.
 
+The base `config/opencode.json` also carries the shell permission allowlist. For read-only git workflows, it explicitly allows both normal git commands and `GIT_MASTER=1`-prefixed variants used by the `git-master` skill, with exact entries for bare commands like `git status` plus wildcard entries for argument-bearing forms like `git status --short`.
+
 ### X11 Clipboard Support
 
 If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) with `DISPLAY` for clipboard sharing. Skipped on Wayland-only or macOS hosts.
