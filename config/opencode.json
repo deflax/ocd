@@ -110,6 +110,6 @@
     "opencode-claude-auth@1.5.0",
     "oh-my-openagent@3.17.4",
     "@tarquinen/opencode-dcp@3.1.9",
-    "@slkiser/opencode-quota@3.0.2"
+    "@slkiser/opencode-quota@3.1.4"
   ]
 }
