@@ -95,6 +95,7 @@
   "disabled_skills": [],
 
   "disabled_hooks": [
+    "no-sisyphus-gpt"
   ],
 
   "git_master": {
