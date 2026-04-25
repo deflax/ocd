@@ -134,7 +134,7 @@
   },
   "plugin": [
     "opencode-claude-auth@1.5.0",
-    "oh-my-openagent@3.17.4",
+    "oh-my-openagent@3.17.5",
     "@tarquinen/opencode-dcp@3.1.9",
     "@slkiser/opencode-quota@3.1.4"
   ]
