@@ -169,6 +169,7 @@ docker run -it \
     -e HOME=/home/coder \
     -e PATH="/home/coder/.local/bin:${PATH}" \
     -e DISPLAY="${DISPLAY:-}" \
+    -e TERM="tmux-256color" \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     -e OPENCODE_CONFIG_DIR=/config \
