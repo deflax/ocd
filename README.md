@@ -5,7 +5,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 ## Features
 
 - Runs OpenCode in an isolated Docker container
-- Mounts your current working directory as `/workspace`
+- Mounts your current working directory at a stable unique path under `/workspaces/...`
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
@@ -154,9 +154,11 @@ Username defaults to `opencode` (override with `OPENCODE_SERVER_USERNAME`).
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates unique container name per run
-- Mounts current directory to `/workspace`
+- Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`)
 - Applies security restrictions (dropped capabilities, no-new-privileges)
+
+Old sessions are not migrated; this only affects new launches.
 
 ## Self-Hosted Model Configuration
 

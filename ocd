@@ -12,7 +12,26 @@ done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
 # Get the current working directory (where script is run from)
-CURRENT_DIR="$(pwd)"
+CURRENT_DIR="$(pwd -P)"
+
+WORKSPACE_BASENAME="$(basename "$CURRENT_DIR")"
+WORKSPACE_BASENAME="${WORKSPACE_BASENAME//[^A-Za-z0-9._-]/-}"
+WORKSPACE_BASENAME="${WORKSPACE_BASENAME#-}"
+WORKSPACE_BASENAME="${WORKSPACE_BASENAME%-}"
+if [ -z "$WORKSPACE_BASENAME" ]; then
+    WORKSPACE_BASENAME="workspace"
+fi
+
+if command -v sha256sum >/dev/null 2>&1; then
+    CURRENT_DIR_HASH="$(printf '%s' "$CURRENT_DIR" | sha256sum | cut -c1-12)"
+elif command -v shasum >/dev/null 2>&1; then
+    CURRENT_DIR_HASH="$(printf '%s' "$CURRENT_DIR" | shasum -a 256 | cut -c1-12)"
+else
+    echo "Error: neither sha256sum nor shasum is available to hash the workspace path."
+    exit 1
+fi
+
+CONTAINER_WORKSPACE="/workspaces/${WORKSPACE_BASENAME}-${CURRENT_DIR_HASH}"
 
 # Parse flags (must come before any Docker args)
 OMO_PROFILE=""
@@ -152,9 +171,9 @@ fi
 
 # Run the container
 if [ "$WEB_MODE" = true ]; then
-    echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}')"
+    echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
 else
-    echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace."
+    echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
 fi
 docker run -it \
     --rm \
@@ -163,9 +182,9 @@ docker run -it \
     -v "${SCRIPT_DIR}/data:/home/coder:rw" \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
     -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
-    -v "${CURRENT_DIR}:/workspace:rw" \
+    -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
     "${X11_MOUNT[@]}" \
-    -w /workspace \
+    -w "${CONTAINER_WORKSPACE}" \
     -e HOME=/home/coder \
     -e PATH="/home/coder/.local/bin:${PATH}" \
     -e DISPLAY="${DISPLAY:-}" \
