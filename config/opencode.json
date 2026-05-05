@@ -37,10 +37,14 @@
       }
     }
   },
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved: 10000
+  },
   "plugin": [
-    "opencode-claude-auth@1.5.0",
-    "oh-my-openagent@3.17.12",
-    "@tarquinen/opencode-dcp@3.1.9",
-    "@slkiser/opencode-quota@3.1.4"
+    "opencode-claude-auth@1.5.3",
+    "oh-my-openagent@3.17.14",
+    "@slkiser/opencode-quota@3.6.2"
   ]
 }
