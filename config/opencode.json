@@ -40,7 +40,7 @@
   "compaction": {
     "auto": true,
     "prune": true,
-    "reserved: 10000
+    "reserved": 10000
   },
   "plugin": [
     "opencode-claude-auth@1.5.3",
