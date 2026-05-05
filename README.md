@@ -33,6 +33,7 @@ ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 | `config/opencode.local.json` | Local overrides (gitignored) |
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
 | `config/oh-my-openagent.*.json` | Model profiles (see below) |
+| `config/tui.json` | TUI theme/config mounted into the container |
 | `data/` | Persistent home directory |
 
 ### Local Config Overrides
@@ -43,9 +44,9 @@ Create `config/opencode.local.json` to override settings without committing:
 { "provider": { "apiKey": "sk-secret-key" } }
 ```
 
-On startup, `ocd` deep-merges this on top of `opencode.json` using `jq`. The merged result is mounted read-only into the container.
+On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. The merged result is mounted read-only into the container.
 
-The base `config/opencode.json` also carries the shell permission allowlist. For read-only git workflows, it explicitly allows both normal git commands and `GIT_MASTER=1`-prefixed variants used by the `git-master` skill, with exact entries for bare commands like `git status` plus wildcard entries for argument-bearing forms like `git status --short`.
+The base `config/opencode.json` also carries shell permissions. Current defaults allow bash commands broadly while denying `git push`, `sudo`, and `su` patterns.
 
 ### X11 Clipboard Support
 
@@ -64,10 +65,10 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 **Other commands:**
 ```bash
 ./claude-auth status   # Check if token exists
-./claude-auth logout   # Remove token
+./claude-auth logout   # Remove token and seeded container credentials
 ```
 
-**How it works:** The `ocd` script seeds `data/.claude/.credentials.json` before launch. The [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) plugin injects OAuth Bearer auth into API requests. Claude Code CLI handles token refresh.
+**How it works:** The `ocd` script seeds `data/.claude/.credentials.json` before launch. `./claude-auth logout` removes both `.claude-token` and the seeded credentials file. The [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) plugin injects OAuth Bearer auth into API requests. Claude Code CLI handles token refresh.
 
 **API key alternative:** Set `OPENCODE_API_KEY` instead.
 
@@ -115,7 +116,7 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ```bash
 OPENCODE_SERVER_PASSWORD=secret ./ocd --web
 ```
-Username defaults to `opencode` (override with `OPENCODE_SERVER_USERNAME`).
+Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVER_USERNAME` is set.
 
 **Environment variables:**
 
@@ -144,7 +145,7 @@ Username defaults to `opencode` (override with `OPENCODE_SERVER_USERNAME`).
 │   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
 │   └── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
 ├── data/           # Persistent home (mounted to /home/coder)
-│   └── .claude/    # Claude credentials (auto-seeded by ocd, gitignored)
+│   └── .claude/    # Claude credentials (auto-seeded by ocd, removed by claude-auth logout, gitignored)
 ├── .claude-token   # OAuth token (gitignored, created by claude-auth)
 └── Dockerfile      # Container definition
 ```
@@ -155,7 +156,7 @@ The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates unique container name per run
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
-- Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`)
+- Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
 Old sessions are not migrated; this only affects new launches.

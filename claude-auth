@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
 # Configuration
 TOKEN_FILE="${SCRIPT_DIR}/.claude-token"
+CLAUDE_CRED_FILE="${SCRIPT_DIR}/data/.claude/.credentials.json"
 
 usage() {
     cat <<'EOF'
@@ -107,6 +108,10 @@ case "$CMD" in
             echo "Removed .claude-token"
         else
             echo "No token file found."
+        fi
+        if [ -f "$CLAUDE_CRED_FILE" ]; then
+            rm -f "$CLAUDE_CRED_FILE"
+            echo "Removed data/.claude/.credentials.json"
         fi
         echo "Claude credentials cleared."
         ;;

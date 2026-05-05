@@ -83,13 +83,13 @@ if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
 fi
 
 # Config: merge local overrides on top of base config if they exist.
-# NOTE: jq's `*` operator merges objects recursively but REPLACES arrays wholesale.
-# If the base has "plugins": ["a","b"] and local has "plugins": ["c"], the result is ["c"].
-# This is intentional — local overrides are full replacements for array fields.
+# Objects are merged recursively; arrays are appended with duplicate entries skipped.
+JQ_MERGE_FILTER='def merge_arrays(a; b): reduce b[] as $item (a; if index($item) == null then . + [$item] else . end); def deepmerge(a; b): reduce (b | keys_unsorted[]) as $key (a; .[$key] = if ((a[$key] | type) == "object" and (b[$key] | type) == "object") then deepmerge(a[$key]; b[$key]) elif ((a[$key] | type) == "array" and (b[$key] | type) == "array") then merge_arrays(a[$key]; b[$key]) else b[$key] end); deepmerge(.[0]; .[1])'
 OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
+TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
 if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
     echo "Merging opencode.local.json into opencode.json..."
-    jq -s '.[0] * .[1]' \
+    jq -s "$JQ_MERGE_FILTER" \
         "${SCRIPT_DIR}/config/opencode.json" \
         "${SCRIPT_DIR}/config/opencode.local.json" \
         > "${SCRIPT_DIR}/config/opencode.merged.json"
@@ -119,7 +119,7 @@ fi
 OMO_CONFIG_HOST="$OMO_BASE_CONFIG"
 if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
     echo "Merging oh-my-openagent.local.json into $(basename "$OMO_BASE_CONFIG")..."
-    jq -s '.[0] * .[1]' \
+    jq -s "$JQ_MERGE_FILTER" \
         "$OMO_BASE_CONFIG" \
         "${SCRIPT_DIR}/config/oh-my-openagent.local.json" \
         > "${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
@@ -169,6 +169,14 @@ else
     OPENCODE_CMD=("$@")
 fi
 
+SERVER_ENV=()
+if [ -n "${OPENCODE_SERVER_PASSWORD:-}" ]; then
+    SERVER_ENV+=(-e OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD}")
+fi
+if [ -n "${OPENCODE_SERVER_USERNAME:-}" ]; then
+    SERVER_ENV+=(-e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME}")
+fi
+
 # Run the container
 if [ "$WEB_MODE" = true ]; then
     echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
@@ -182,6 +190,7 @@ docker run -it \
     -v "${SCRIPT_DIR}/data:/home/coder:rw" \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
     -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
+    -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
     -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
     "${X11_MOUNT[@]}" \
     -w "${CONTAINER_WORKSPACE}" \
@@ -192,8 +201,7 @@ docker run -it \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     -e OPENCODE_CONFIG_DIR=/config \
-    -e OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD:-}" \
-    -e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME:-}" \
+    "${SERVER_ENV[@]}" \
     --security-opt no-new-privileges:true \
     --cap-drop ALL \
     --cap-add CHOWN \
