@@ -98,6 +98,8 @@ and missing verification. Report findings first, ordered by severity.
 
 Use project-level `.opencode/agents/*.md` files in the workspace for agents that should live with one project. Use this repo's `config/agents/*.md` for agents you want available whenever you launch through `ocd`. Avoid naming custom agents the same as built-in agents unless you intentionally want to override them.
 
+This wrapper includes `hallucinator`, a high-temperature primary agent for speculative ideation and playful brainstorming. Use it when you want more creative, less grounded output; switch back to a grounded agent before relying on factual claims or implementation details.
+
 ### Model Profiles
 
 Switch models via `--profile` flag:
