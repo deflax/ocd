@@ -34,6 +34,7 @@ ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
 | `config/oh-my-openagent.*.json` | Model profiles (see below) |
 | `config/tui.json` | TUI theme/config mounted into the container |
+| `config/agents/*.md` | Wrapper-level custom OpenCode agents |
 | `data/` | Persistent home directory |
 
 ### Local Config Overrides
@@ -75,6 +76,27 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 ### oh-my-openagent
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
+
+### Custom Markdown Agents
+
+Define wrapper-level custom OpenCode agents as Markdown files under `config/agents/`. The `ocd` launcher mounts that directory read-only to `/config/agents`, and `OPENCODE_CONFIG_DIR=/config` lets OpenCode load them alongside the JSON config.
+
+Each file name becomes the agent name. For example, `config/agents/reviewer.md` creates an agent named `reviewer`:
+
+```markdown
+---
+description: Reviews changes for bugs and missing tests
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+permission:
+  edit: deny
+---
+Review the current changes. Focus on correctness, regressions, security issues,
+and missing verification. Report findings first, ordered by severity.
+```
+
+Use project-level `.opencode/agents/*.md` files in the workspace for agents that should live with one project. Use this repo's `config/agents/*.md` for agents you want available whenever you launch through `ocd`. Avoid naming custom agents the same as built-in agents unless you intentionally want to override them.
 
 ### Model Profiles
 
@@ -143,7 +165,8 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 │   ├── oh-my-openagent.anthropic.json # oh-my-openagent Anthropic profile (committed)
 │   ├── oh-my-openagent.ollama.json    # oh-my-openagent Ollama-only profile (committed)
 │   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
-│   └── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
+│   ├── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
+│   └── agents/                     # Markdown custom agents mounted to /config/agents
 ├── data/           # Persistent home (mounted to /home/coder)
 │   └── .claude/    # Claude credentials (auto-seeded by ocd, removed by claude-auth logout, gitignored)
 ├── .claude-token   # OAuth token (gitignored, created by claude-auth)
@@ -156,7 +179,12 @@ The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates unique container name per run
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
+<<<<<<< HEAD
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
+=======
+- Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`)
+- Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
+>>>>>>> e548c83 (Document custom markdown agents)
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
 Old sessions are not migrated; this only affects new launches.
