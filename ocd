@@ -150,6 +150,12 @@ if [ -d /tmp/.X11-unix ]; then
     X11_MOUNT=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
 fi
 
+# Custom OpenCode agents: Markdown files in config/agents are loaded via OPENCODE_CONFIG_DIR.
+AGENTS_MOUNT=()
+if [ -d "${SCRIPT_DIR}/config/agents" ]; then
+    AGENTS_MOUNT=(-v "${SCRIPT_DIR}/config/agents:/config/agents:ro")
+fi
+
 # Web mode: configure command (network is always --network host for Ollama compatibility)
 if [ "$WEB_MODE" = true ]; then
     # Auto-detect available port if the requested one is in use
@@ -191,6 +197,7 @@ docker run -it \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
     -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
     -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
+    "${AGENTS_MOUNT[@]}" \
     -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
     "${X11_MOUNT[@]}" \
     -w "${CONTAINER_WORKSPACE}" \
