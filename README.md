@@ -11,6 +11,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Pre-installed tools: git, ripgrep, fzf, curl, and more
 - [Claude Code](https://github.com/anthropics/claude-code) OAuth token support (use your Pro/Max subscription)
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
+- Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
 - Web UI mode for browser-based access
 
 ## Quick Start
@@ -34,6 +35,7 @@ ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
 | `config/oh-my-openagent.*.json` | Model profiles (see below) |
 | `config/tui.json` | TUI theme/config mounted into the container |
+| `config/tmux.conf` | Internal tmux config mounted as `/home/coder/.tmux.conf` |
 | `config/agents/*.md` | Wrapper-level custom OpenCode agents |
 | `data/` | Persistent home directory |
 
@@ -76,6 +78,10 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 ### oh-my-openagent
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
+
+The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
+
+This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd` from a host tmux pane while oh-my-openagent manages its own separate tmux server inside Docker. Rebuild with `./build` after changing the Dockerfile or tmux package set.
 
 ### Custom Markdown Agents
 
@@ -168,6 +174,7 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 │   ├── oh-my-openagent.ollama.json    # oh-my-openagent Ollama-only profile (committed)
 │   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
 │   ├── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
+│   ├── tmux.conf                   # Internal tmux config mounted to /home/coder/.tmux.conf
 │   └── agents/                     # Markdown custom agents mounted to /config/agents
 ├── data/           # Persistent home (mounted to /home/coder)
 │   └── .claude/    # Claude credentials (auto-seeded by ocd, removed by claude-auth logout, gitignored)
@@ -181,12 +188,9 @@ The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates unique container name per run
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
-<<<<<<< HEAD
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
-=======
-- Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`)
 - Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
->>>>>>> e548c83 (Document custom markdown agents)
+- Mounts `config/tmux.conf` to `/home/coder/.tmux.conf` for container-internal tmux sessions
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
 Old sessions are not migrated; this only affects new launches.
