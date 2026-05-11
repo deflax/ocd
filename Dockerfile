@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     unzip \
     fzf \
+    tmux \
     iputils-ping \
     procps \
     xdg-utils \
