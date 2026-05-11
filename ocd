@@ -225,6 +225,8 @@ docker run -it \
     -e PATH="/home/coder/.local/bin:${PATH}" \
     -e DISPLAY="${DISPLAY:-}" \
     -e TERM=xterm-256color \
+    -e LANG=C.UTF-8 \
+    -e LC_ALL=C.UTF-8 \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     -e OPENCODE_CONFIG_DIR=/config \
