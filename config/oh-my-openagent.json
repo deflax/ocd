@@ -104,5 +104,13 @@
     "message_payload_max_bytes": 32768,
     "recipient_unread_max_bytes": 262144,
     "mailbox_poll_interval_ms": 3000
+  },
+
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical",
+    "main_pane_size": 60,
+    "main_pane_min_width": 120,
+    "agent_pane_min_width": 40
   }
 }
