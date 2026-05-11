@@ -79,7 +79,7 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
 
-The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
+The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode is enabled in the committed model profiles, with tmux visualization turned on. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 
 This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd` from a host tmux pane while oh-my-openagent manages its own separate tmux server inside Docker. Rebuild with `./build` after changing the Dockerfile or tmux package set.
 
