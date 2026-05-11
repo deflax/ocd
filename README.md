@@ -8,7 +8,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Mounts your current working directory at a stable unique path under `/workspaces/...`
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
-- Pre-installed tools: git, ripgrep, fzf, curl, and more
+- Pre-installed tools: git, ripgrep, fzf, curl, Bun/`bunx`, and more
 - [Claude Code](https://github.com/anthropics/claude-code) OAuth token support (use your Pro/Max subscription)
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
@@ -79,6 +79,8 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 ### oh-my-openagent
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
+
+The image also includes Bun, so diagnostic commands such as `bunx oh-my-opencode doctor` are available inside the container after rebuilding with `./build`.
 
 The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode and top-level `tmux.enabled` integration are enabled in the committed model profiles. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 

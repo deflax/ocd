@@ -56,6 +56,13 @@ RUN apt install -y \
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs
 
+ENV BUN_INSTALL="/usr/local/bun"
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+
+RUN curl -fsSL https://bun.com/install | bash \
+    && bun --version \
+    && bunx --version
+
 RUN npm install -g --prefix /usr/local \
     opencode-ai@1.14.48 \
     @anthropic-ai/claude-code@2.1.128 \
