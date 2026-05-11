@@ -46,7 +46,7 @@ while [[ $# -gt 0 ]]; do
                 OMO_PROFILE="$2"
                 shift 2
             else
-                echo "Error: --profile requires a value (e.g., --profile anthropic)"
+                echo "Error: --profile requires a value (e.g., --profile minimax)"
                 exit 1
             fi
             ;;
@@ -130,24 +130,6 @@ if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
         "${SCRIPT_DIR}/config/oh-my-openagent.local.json" \
         > "${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
     OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
-fi
-
-# Claude Code OAuth token: read from .claude-token file or env var,
-# then seed ~/.claude/.credentials.json so the opencode-claude-auth plugin can read it.
-CLAUDE_TOKEN_FILE="${SCRIPT_DIR}/.claude-token"
-if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-    : # env var already set, use as-is
-elif [ -f "$CLAUDE_TOKEN_FILE" ]; then
-    CLAUDE_CODE_OAUTH_TOKEN="$(cat "$CLAUDE_TOKEN_FILE")"
-fi
-
-if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-    CLAUDE_CRED_DIR="${SCRIPT_DIR}/data/.claude"
-    CLAUDE_CRED_FILE="${CLAUDE_CRED_DIR}/.credentials.json"
-    mkdir -p "$CLAUDE_CRED_DIR"
-    printf '{"claudeAiOauth":{"accessToken":"%s","refreshToken":"","expiresAt":1800000000000}}\n' \
-        "$CLAUDE_CODE_OAUTH_TOKEN" > "$CLAUDE_CRED_FILE"
-    chmod 600 "$CLAUDE_CRED_FILE"
 fi
 
 # X11 clipboard support: mount the socket dir only if it exists

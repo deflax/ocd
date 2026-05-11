@@ -43,7 +43,6 @@
     "reserved": 10000
   },
   "plugin": [
-    "opencode-claude-auth@1.5.3",
     "oh-my-openagent@4.0.0",
     "@slkiser/opencode-quota@3.7.1"
   ]

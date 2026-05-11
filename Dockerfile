@@ -64,7 +64,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 
 RUN npm install -g --prefix /usr/local \
     opencode-ai@1.14.48 \
-    @anthropic-ai/claude-code@2.1.128 \
     @ast-grep/cli@latest \
     @biomejs/biome@latest \
     @vue/language-server@latest \
