@@ -19,7 +19,8 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 1. **Build the image:** `./build`
 2. **Set up Claude auth (first time):** `./claude-auth setup-token` → opens browser for authorization, saves token to `.claude-token` (~1 year validity)
 3. **Run the container:** `./ocd`
-4. **Or start in web mode:** `./ocd --web` → opens web UI at http://localhost:4096
+4. **Or start with internal tmux:** `./ocd --tmux` → opens OpenCode inside a container tmux session
+5. **Or start in web mode:** `./ocd --web` → opens web UI at http://localhost:4096
 
 **Optional:** Symlink to run from anywhere:
 ```bash
@@ -81,7 +82,14 @@ Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Libr
 
 The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode is enabled in the committed model profiles, with tmux visualization turned on. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 
-This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd` from a host tmux pane while oh-my-openagent manages its own separate tmux server inside Docker. Rebuild with `./build` after changing the Dockerfile or tmux package set.
+Use `./ocd --tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. Extra OpenCode arguments are forwarded after `opencode`, and `--profile` still selects the mounted oh-my-openagent profile:
+
+```bash
+./ocd --tmux
+./ocd --tmux --profile anthropic
+```
+
+This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --tmux` from a host tmux pane while oh-my-openagent uses its own separate tmux server inside Docker. `--tmux` is for the terminal TUI and cannot be combined with `--web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
 
 ### Custom Markdown Agents
 
@@ -139,6 +147,8 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ./ocd --web --port 8080              # Custom port
 ./ocd --web --profile anthropic      # Combine with model profiles
 ```
+
+Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI.
 
 **Port auto-detection:** If the default port is already in use (e.g., another `ocd --web` instance), it automatically finds the next available port and prints which one it chose.
 

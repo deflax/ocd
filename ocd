@@ -36,6 +36,7 @@ CONTAINER_WORKSPACE="/workspaces/${WORKSPACE_BASENAME}-${CURRENT_DIR_HASH}"
 # Parse flags (must come before any Docker args)
 OMO_PROFILE=""
 WEB_MODE=false
+TMUX_MODE=false
 WEB_PORT="${OCD_WEB_PORT:-4096}"
 DOCKER_ARGS=()
 while [[ $# -gt 0 ]]; do
@@ -51,6 +52,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --web)
             WEB_MODE=true
+            shift
+            ;;
+        --tmux)
+            TMUX_MODE=true
             shift
             ;;
         --port)
@@ -157,8 +162,11 @@ if [ -d "${SCRIPT_DIR}/config/agents" ]; then
     AGENTS_MOUNT=(-v "${SCRIPT_DIR}/config/agents:/config/agents:ro")
 fi
 
-# Web mode: configure command (network is always --network host for Ollama compatibility)
-if [ "$WEB_MODE" = true ]; then
+# Configure command (network is always --network host for Ollama compatibility)
+if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
+    echo "Error: --tmux cannot be combined with --web."
+    exit 1
+elif [ "$WEB_MODE" = true ]; then
     # Auto-detect available port if the requested one is in use
     while ss -tln 2>/dev/null | grep -q ":${WEB_PORT}\b" \
        || docker ps --format '{{.Ports}}' 2>/dev/null | grep -q ":${WEB_PORT}->"; do
@@ -172,6 +180,8 @@ if [ "$WEB_MODE" = true ]; then
         echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
         echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --web"
     fi
+elif [ "$TMUX_MODE" = true ]; then
+    OPENCODE_CMD=(tmux new-session -A -s opencode opencode "$@")
 else
     OPENCODE_CMD=("$@")
 fi
@@ -187,6 +197,8 @@ fi
 # Run the container
 if [ "$WEB_MODE" = true ]; then
     echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
+elif [ "$TMUX_MODE" = true ]; then
+    echo "Starting tmux-backed container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
 else
     echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
 fi
