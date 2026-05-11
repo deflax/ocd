@@ -8,9 +8,6 @@ config/opencode.merged.json
 config/oh-my-openagent.local.json
 config/oh-my-openagent.merged.json
 
-# Legacy OAuth token filename; keep local secrets untracked.
-.clau??-token
-
 # Temporary files (cloned repos, build artifacts)
 tmp/
 .sisyphus/
