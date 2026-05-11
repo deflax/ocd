@@ -13,8 +13,7 @@ This repository is a small Bash-and-config wrapper for running OpenCode inside a
 Top-level files are the product surface:
 
 - `build` — builds Docker image `ocd:latest` using host UID/GID.
-- `ocd` — main launcher; parses flags, merges configs, seeds Claude credentials, runs Docker.
-- `claude-auth` — creates/checks/removes `.claude-token`.
+- `ocd` — main launcher; parses flags, merges configs, runs Docker.
 - `clearcache` — removes selected caches under `data/` without deleting core config/credentials.
 - `Dockerfile` — container definition and preinstalled tools.
 - `README.md` — user-facing architecture and usage guide; keep it aligned with behavior changes.
@@ -38,7 +37,6 @@ Top-level files are the product surface:
   - Defines permissions, plugin list, and local Ollama provider (`http://localhost:11434/v1`).
 - `config/oh-my-openagent.json`
   - Default agent/category routing profile.
-- `config/oh-my-openagent.anthropic.json`
 - `config/oh-my-openagent.minimax.json`
 - `config/oh-my-openagent.ollama.json`
   - Same overall schema as the default profile; mostly model and concurrency differences.
@@ -67,9 +65,9 @@ Root scripts follow a consistent style:
 
 - shebang: `#!/usr/bin/env bash`
 - strict mode: `set -e` or `set -euo pipefail`
-- symlink-safe script directory resolution via `BASH_SOURCE[0]` loop in `ocd`, `claude-auth`, `clearcache`
-- uppercase variable names for config/env (`SCRIPT_DIR`, `WEB_PORT`, `TOKEN_FILE`)
-- small helper functions like `usage()` and `do_setup_token()`
+- symlink-safe script directory resolution via `BASH_SOURCE[0]` loop in `ocd` and `clearcache`
+- uppercase variable names for config/env (`SCRIPT_DIR`, `WEB_PORT`, `IMAGE_NAME`)
+- small helper functions like `usage()`
 - manual argument parsing with `case`
 
 When editing or adding scripts, match that style instead of introducing a different CLI framework.
@@ -80,14 +78,10 @@ Primary workflows:
 
 ```bash
 ./build
-./claude-auth setup-token
-./claude-auth status
-./claude-auth logout
 ./ocd
 ./ocd --web
 ./ocd --web --port 8080
 ./ocd --profile minimax
-./ocd --profile anthropic
 ./ocd --profile ollama
 ./clearcache
 ./clearcache --dry-run
@@ -100,7 +94,6 @@ There is no repo-local lint/test command suite to update.
 When making changes, usually inspect these files together:
 
 - behavior change in container startup or mounting → `ocd`, `README.md`
-- auth flow changes → `claude-auth`, `ocd`, `README.md`
 - cache cleanup changes → `clearcache`, `README.md` if user-visible
 - image/tooling changes → `Dockerfile`, `README.md`
 - profile/model routing changes → matching `config/oh-my-openagent*.json`, possibly `README.md`
@@ -108,10 +101,8 @@ When making changes, usually inspect these files together:
 
 ## Repo-specific gotchas
 
-- `.claude-token` is sensitive and gitignored.
 - `config/*.local.json` and generated `*.merged.json` are gitignored and may contain secrets or machine-specific state.
 - `data/` is intentionally ignored except tracked placeholders; do not treat it as stable source.
-- `ocd` seeds `data/.claude/.credentials.json` from `.claude-token` or `CLAUDE_CODE_OAUTH_TOKEN` before launch.
 - Web mode is unauthenticated unless `OPENCODE_SERVER_PASSWORD` is set.
 - Port auto-increment logic exists in `ocd`; preserve it if touching web-mode startup.
 - X11 clipboard mounting is conditional on `/tmp/.X11-unix`; do not assume GUI support is always available.
@@ -124,8 +115,6 @@ These are the main upstream systems this repo configures around:
 - OpenCode plugins docs: `https://opencode.ai/docs/plugins/`
 - OpenCode source/docs: `https://github.com/anomalyco/opencode`
 - oh-my-openagent: `https://github.com/code-yeongyu/oh-my-openagent`
-- Claude Code docs: `https://code.claude.com/docs`
-- opencode-claude-auth: `https://github.com/griffinmartin/opencode-claude-auth`
 - Ollama docs / OpenAI compatibility: `https://docs.ollama.com/`
 
 ## Current repo facts verified during exploration

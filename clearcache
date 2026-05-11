@@ -32,7 +32,6 @@ Removes:
 
 Preserves:
   data/.config/               OpenCode settings and plugin metadata (except opencode/node_modules)
-  data/.claude/               Session transcripts
   data/.local/                User local bin/lib/share/state (except share/opencode/bin/node_modules)
   data/.terraform.d/          Terraform state
   config/                     All configuration (mounted read-only in container)

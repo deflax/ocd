@@ -9,7 +9,6 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, Bun/`bunx`, and more
-- [Claude Code](https://github.com/anthropics/claude-code) OAuth token support (use your Pro/Max subscription)
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
 - Web UI mode for browser-based access
@@ -17,10 +16,9 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 ## Quick Start
 
 1. **Build the image:** `./build`
-2. **Set up Claude auth (first time):** `./claude-auth setup-token` → opens browser for authorization, saves token to `.claude-token` (~1 year validity)
-3. **Run the container:** `./ocd`
-4. **Or start with internal tmux:** `./ocd --tmux` → opens OpenCode inside a container tmux session
-5. **Or start in web mode:** `./ocd --web` → opens web UI at http://localhost:4096
+2. **Run the container:** `./ocd`
+3. **Or start with internal tmux:** `./ocd --tmux` → opens OpenCode inside a container tmux session
+4. **Or start in web mode:** `./ocd --web` → opens web UI at http://localhost:4096
 
 **Optional:** Symlink to run from anywhere:
 ```bash
@@ -56,26 +54,6 @@ The base `config/opencode.json` also carries shell permissions. Current defaults
 
 If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) with `DISPLAY` for clipboard sharing. Skipped on Wayland-only or macOS hosts.
 
-### Claude Code Authentication
-
-**Setup:** `./claude-auth setup-token` — opens browser, saves token to `.claude-token`
-
-**Alternative:** Set `CLAUDE_CODE_OAUTH_TOKEN` env var directly:
-```bash
-export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
-./ocd
-```
-
-**Other commands:**
-```bash
-./claude-auth status   # Check if token exists
-./claude-auth logout   # Remove token and seeded container credentials
-```
-
-**How it works:** The `ocd` script seeds `data/.claude/.credentials.json` before launch. `./claude-auth logout` removes both `.claude-token` and the seeded credentials file. The [opencode-claude-auth](https://github.com/griffinmartin/opencode-claude-auth) plugin injects OAuth Bearer auth into API requests. Claude Code CLI handles token refresh.
-
-**API key alternative:** Set `OPENCODE_API_KEY` instead.
-
 ### oh-my-openagent
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
@@ -88,7 +66,7 @@ Use `./ocd --tmux` to start OpenCode inside a visible container-internal tmux se
 
 ```bash
 ./ocd --tmux
-./ocd --tmux --profile anthropic
+./ocd --tmux --profile minimax
 ```
 
 This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --tmux` from a host tmux pane while oh-my-openagent uses its own separate tmux server inside Docker. `--tmux` is for the terminal TUI and cannot be combined with `--web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
@@ -109,7 +87,7 @@ Each file name becomes the agent name. For example, `config/agents/reviewer.md` 
 ---
 description: Reviews changes for bugs and missing tests
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
+model: openai/gpt-5.5
 temperature: 0.1
 permission:
   edit: deny
@@ -129,7 +107,6 @@ Switch models via `--profile` flag:
 ```bash
 ./ocd                        # Use default OpenAI models
 ./ocd --profile minimax      # Use MiniMax models
-./ocd --profile anthropic    # Use Anthropic Claude models
 ./ocd --profile ollama       # Use local Ollama models only
 ```
 
@@ -139,7 +116,6 @@ Switch models via `--profile` flag:
 |---------|-------------|
 | (default) | Uses OpenAI models exclusively |
 | `minimax` | Uses MiniMax models for most agents (with OpenAI fallbacks) |
-| `anthropic` | Uses Anthropic Claude models (requires Claude Code OAuth or API key) |
 | `ollama` | Uses the local Ollama-only profile in `config/oh-my-openagent.ollama.json` with the Ollama provider from `config/opencode.json` |
 
 The committed Ollama profile maps all agents/categories to the local `gemma4:26b-16k` model by default.
@@ -153,7 +129,7 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ```bash
 ./ocd --web                          # Web UI on http://localhost:4096
 ./ocd --web --port 8080              # Custom port
-./ocd --web --profile anthropic      # Combine with model profiles
+./ocd --web --profile minimax        # Combine with model profiles
 ```
 
 Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI.
@@ -180,23 +156,19 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 .
 ├── build           # Build the Docker image
 ├── ocd             # Run the container
-├── claude-auth     # Manage Claude auth
-├── clearcache      # Clear caches (preserves credentials)
+├── clearcache      # Clear caches
 ├── config/         # OpenCode and oh-my-openagent configs
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
 │   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
 │   ├── oh-my-openagent.json        # oh-my-openagent default config — OpenAI only (committed)
 │   ├── oh-my-openagent.minimax.json   # oh-my-openagent MiniMax profile (committed)
-│   ├── oh-my-openagent.anthropic.json # oh-my-openagent Anthropic profile (committed)
 │   ├── oh-my-openagent.ollama.json    # oh-my-openagent Ollama-only profile (committed)
 │   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
 │   ├── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
 │   ├── tmux.conf                   # Internal tmux config mounted to /home/coder/.tmux.conf
 │   └── agents/                     # Markdown custom agents mounted to /config/agents
 ├── data/           # Persistent home (mounted to /home/coder)
-│   └── .claude/    # Claude credentials (auto-seeded by ocd, removed by claude-auth logout, gitignored)
-├── .claude-token   # OAuth token (gitignored, created by claude-auth)
 └── Dockerfile      # Container definition
 ```
 
