@@ -93,6 +93,8 @@ This tmux setup is intentionally internal to the container. It does not share ho
 
 The launcher pins the container's outer `TERM` to `xterm-256color`; tmux then sets its own terminal type inside the session. This avoids broken rendering when the host uses a terminal name that is not available in Debian terminfo.
 
+For team-mode pane visualization, the launcher also exports the active tmux pane id before starting OpenCode, so oh-my-openagent can resolve the caller pane and split the correct window.
+
 ### Custom Markdown Agents
 
 Define wrapper-level custom OpenCode agents as Markdown files under `config/agents/`. The `ocd` launcher mounts that directory read-only to `/config/agents`, and `OPENCODE_CONFIG_DIR=/config` lets OpenCode load them alongside the JSON config.

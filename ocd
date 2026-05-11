@@ -186,7 +186,7 @@ elif [ "$TMUX_MODE" = true ]; then
         printf -v QUOTED_ARG '%q' "$arg"
         TMUX_SHELL_COMMAND+=" ${QUOTED_ARG}"
     done
-    OPENCODE_CMD=(tmux new-session -s opencode "${TMUX_SHELL_COMMAND}")
+    OPENCODE_CMD=(tmux new-session -s opencode "export TMUX_PANE=\$(tmux display-message -p '#{pane_id}'); exec ${TMUX_SHELL_COMMAND}")
 else
     OPENCODE_CMD=(opencode "$@")
 fi
@@ -222,7 +222,7 @@ docker run -it \
     "${X11_MOUNT[@]}" \
     -w "${CONTAINER_WORKSPACE}" \
     -e HOME=/home/coder \
-    -e PATH="/home/coder/.local/bin:${PATH}" \
+    -e PATH="/home/coder/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin" \
     -e DISPLAY="${DISPLAY:-}" \
     -e TERM=xterm-256color \
     -e LANG=C.UTF-8 \
