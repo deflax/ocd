@@ -174,16 +174,21 @@ elif [ "$WEB_MODE" = true ]; then
         WEB_PORT=$((WEB_PORT + 1))
     done
 
-    OPENCODE_CMD=(web --hostname 0.0.0.0 --port "${WEB_PORT}")
+    OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
 
     if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
         echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
         echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --web"
     fi
 elif [ "$TMUX_MODE" = true ]; then
-    OPENCODE_CMD=(tmux new-session -A -s opencode opencode "$@")
+    printf -v TMUX_SHELL_COMMAND 'opencode %q' "${CONTAINER_WORKSPACE}"
+    for arg in "$@"; do
+        printf -v QUOTED_ARG '%q' "$arg"
+        TMUX_SHELL_COMMAND+=" ${QUOTED_ARG}"
+    done
+    OPENCODE_CMD=(tmux new-session -s opencode "${TMUX_SHELL_COMMAND}")
 else
-    OPENCODE_CMD=("$@")
+    OPENCODE_CMD=(opencode "$@")
 fi
 
 SERVER_ENV=()
@@ -204,6 +209,7 @@ else
 fi
 docker run -it \
     --rm \
+    --entrypoint "" \
     --name "${CONTAINER_NAME}" \
     --network host \
     -v "${SCRIPT_DIR}/data:/home/coder:rw" \
@@ -218,7 +224,7 @@ docker run -it \
     -e HOME=/home/coder \
     -e PATH="/home/coder/.local/bin:${PATH}" \
     -e DISPLAY="${DISPLAY:-}" \
-    -e TERM="tmux-256color" \
+    -e TERM=xterm-256color \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     -e OPENCODE_CONFIG_DIR=/config \
