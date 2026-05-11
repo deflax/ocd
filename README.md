@@ -80,7 +80,7 @@ export CLAUDE_CODE_OAUTH_TOKEN="sk-ant-oat01-..."
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
 
-The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode is enabled in the committed model profiles, with tmux visualization turned on. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
+The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode and top-level `tmux.enabled` integration are enabled in the committed model profiles. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 
 Use `./ocd --tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. Extra OpenCode arguments are forwarded after the workspace path, and `--profile` still selects the mounted oh-my-openagent profile:
 
@@ -90,6 +90,8 @@ Use `./ocd --tmux` to start OpenCode inside a visible container-internal tmux se
 ```
 
 This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --tmux` from a host tmux pane while oh-my-openagent uses its own separate tmux server inside Docker. `--tmux` is for the terminal TUI and cannot be combined with `--web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
+
+When `--tmux` is used, the launcher starts OpenCode with `--port` because oh-my-openagent tmux pane spawning requires an OpenCode server port. The port defaults to `4096` and can be changed with `--port`, the same flag used by web mode.
 
 The launcher pins the container's outer `TERM` to `xterm-256color`; tmux then sets its own terminal type inside the session. This avoids broken rendering when the host uses a terminal name that is not available in Debian terminfo.
 
