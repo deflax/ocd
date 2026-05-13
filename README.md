@@ -8,7 +8,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Mounts your current working directory at a stable unique path under `/workspaces/...`
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
-- Pre-installed tools: git, ripgrep, fzf, curl, Bun/`bunx`, and more
+- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, Terraform, Terraform LS, Node.js language servers, and more
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
 - Web UI mode for browser-based access
@@ -58,7 +58,7 @@ If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) w
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
 
-The image also includes Bun, so diagnostic commands such as `bunx oh-my-opencode doctor` are available inside the container after rebuilding with `./build`.
+The image includes Python as both `python3` and `python`, BasedPyright's `basedpyright-langserver`, and Terraform tooling as both `terraform` and `terraform-ls`, so OpenCode can run common Python tests, Python LSP diagnostics, Terraform formatting, and Terraform LSP diagnostics inside the container after rebuilding with `./build`.
 
 The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode and top-level `tmux.enabled` integration are enabled in the committed model profiles. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 

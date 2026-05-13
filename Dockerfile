@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xclip \
     wl-clipboard \
     python3 \
+    python-is-python3 \
     python3-pip \
     python3-venv \
     golang-go \
@@ -47,6 +48,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
     basedpyright
+
+RUN command -v python \
+    && python --version \
+    && command -v basedpyright-langserver
+
+RUN set -e; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+        amd64) hashicorp_arch="amd64" ;; \
+        arm64) hashicorp_arch="arm64" ;; \
+        *) echo "Unsupported architecture for Terraform tools: $arch" >&2; exit 1 ;; \
+    esac; \
+    terraform_version="$(curl -fsSL https://checkpoint-api.hashicorp.com/v1/check/terraform | jq -r .current_version)"; \
+    terraform_ls_version="$(curl -fsSL https://api.github.com/repos/hashicorp/terraform-ls/releases/latest | jq -r '.tag_name | ltrimstr("v")')"; \
+    tmpdir="$(mktemp -d)"; \
+    curl -fsSL "https://releases.hashicorp.com/terraform/${terraform_version}/terraform_${terraform_version}_linux_${hashicorp_arch}.zip" -o "$tmpdir/terraform.zip"; \
+    unzip -q "$tmpdir/terraform.zip" -d "$tmpdir/terraform"; \
+    install -m 0755 "$tmpdir/terraform/terraform" /usr/local/bin/terraform; \
+    curl -fsSL "https://releases.hashicorp.com/terraform-ls/${terraform_ls_version}/terraform-ls_${terraform_ls_version}_linux_${hashicorp_arch}.zip" -o "$tmpdir/terraform-ls.zip"; \
+    unzip -q "$tmpdir/terraform-ls.zip" -d "$tmpdir/terraform-ls"; \
+    install -m 0755 "$tmpdir/terraform-ls/terraform-ls" /usr/local/bin/terraform-ls; \
+    rm -rf "$tmpdir"; \
+    terraform version; \
+    terraform-ls version
 
 RUN apt install -y \
     python3-pytest \
