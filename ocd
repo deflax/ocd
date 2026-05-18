@@ -89,7 +89,7 @@ fi
 
 # Config: merge local overrides on top of base config if they exist.
 # Objects are merged recursively; arrays are appended with duplicate entries skipped.
-JQ_MERGE_FILTER='def merge_arrays(a; b): reduce b[] as $item (a; if index($item) == null then . + [$item] else . end); def deepmerge(a; b): reduce (b | keys_unsorted[]) as $key (a; .[$key] = if ((a[$key] | type) == "object" and (b[$key] | type) == "object") then deepmerge(a[$key]; b[$key]) elif ((a[$key] | type) == "array" and (b[$key] | type) == "array") then merge_arrays(a[$key]; b[$key]) else b[$key] end); deepmerge(.[0]; .[1])'
+JQ_MERGE_FILTER='def merge_arrays($a; $b): reduce $b[] as $item ($a; if index($item) == null then . + [$item] else . end); def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) elif (($a[$key] | type) == "array" and ($b[$key] | type) == "array") then merge_arrays($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
 OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
 OPENCODE_QUOTA_CONFIG_HOST="${SCRIPT_DIR}/config/opencode-quota/quota-toast.json"
 TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
