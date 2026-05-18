@@ -44,6 +44,6 @@
   },
   "plugin": [
     "oh-my-openagent@4.1.2",
-    "@slkiser/opencode-quota@3.7.1"
+    "@slkiser/opencode-quota@3.8.6"
   ]
 }
