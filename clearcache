@@ -17,23 +17,15 @@ usage() {
   cat <<'EOF'
 Usage: ./clearcache [--dry-run]
 
-Clears all OpenCode/oh-my-openagent cache and package-manager caches.
-
-Removes:
-  data/.cache/opencode/       Cached models list, node_modules, tmp files
-  data/.cache/oh-my-openagent/ Cached provider info, downloaded binaries, tmp files
-  data/.cache/pip/            pip download cache
-  data/.npm/_cacache/         npm content-addressable cache
-  data/.npm/_logs/            npm log files
-  data/.npm/_npx/             npx execution cache
-  data/.config/opencode/node_modules   OpenCode plugin install dependencies
-  data/.local/share/opencode/bin/node_modules  OpenCode binary dependency cache
-  data/.bun/install/          bun package install cache
+Clears persistent runtime data while preserving OpenCode sessions, login state,
+and configuration.
 
 Preserves:
-  data/.config/               OpenCode settings and plugin metadata (except opencode/node_modules)
-  data/.local/                User local bin/lib/share/state (except share/opencode/bin/node_modules)
-  data/.terraform.d/          Terraform state
+  data/.config/               OpenCode settings and plugin metadata, except node_modules
+  data/.local/share/opencode/auth.json
+  data/.local/share/opencode/opencode.db*
+  data/.local/share/opencode/snapshot/
+  data/.local/share/opencode/storage/session_diff/
   config/                     All configuration (mounted read-only in container)
 
 Options:
@@ -57,24 +49,119 @@ for arg in "$@"; do
   esac
 done
 
-# Directories and file globs to remove entirely.
-# Each entry is removed with rm -rf if it exists.
-declare -a TARGETS=(
-  # OpenCode cache (models list, node_modules, lock files, tmp)
-  "${DATA_DIR}/.cache/opencode"
-  # oh-my-openagent cache (provider info, downloaded binaries, tmp)
-  "${DATA_DIR}/.cache/oh-my-openagent"
-  # pip download cache
-  "${DATA_DIR}/.cache/pip"
-  # npm caches (content-addressable store, logs, npx)
-  "${DATA_DIR}/.npm/_cacache"
-  "${DATA_DIR}/.npm/_logs"
-  "${DATA_DIR}/.npm/_npx"
-  "${DATA_DIR}/.config/opencode/node_modules"
-  "${DATA_DIR}/.local/share/opencode/bin/node_modules"
-  # bun package install cache
-  "${DATA_DIR}/.bun/install"
-)
+declare -a TARGETS=()
+
+add_cleanup_targets() {
+  local path
+  [ -d "$DATA_DIR" ] || return 0
+
+  for path in "$DATA_DIR"/* "$DATA_DIR"/.[!.]* "$DATA_DIR"/..?*; do
+    [ -e "$path" ] || continue
+    case "$path" in
+      "${DATA_DIR}/.config"|"${DATA_DIR}/.local") ;;
+      *) TARGETS+=("$path") ;;
+    esac
+  done
+
+  if [ -d "${DATA_DIR}/.local" ]; then
+    for path in "${DATA_DIR}/.local"/* "${DATA_DIR}/.local"/.[!.]* "${DATA_DIR}/.local"/..?*; do
+      [ -e "$path" ] || continue
+      case "$path" in
+        "${DATA_DIR}/.local/share") ;;
+        *) TARGETS+=("$path") ;;
+      esac
+    done
+  fi
+
+  if [ -d "${DATA_DIR}/.local/share" ]; then
+    for path in "${DATA_DIR}/.local/share"/* "${DATA_DIR}/.local/share"/.[!.]* "${DATA_DIR}/.local/share"/..?*; do
+      [ -e "$path" ] || continue
+      case "$path" in
+        "${DATA_DIR}/.local/share/opencode") ;;
+        *) TARGETS+=("$path") ;;
+      esac
+    done
+  fi
+
+  if [ -d "${DATA_DIR}/.local/share/opencode" ]; then
+    for path in "${DATA_DIR}/.local/share/opencode"/* "${DATA_DIR}/.local/share/opencode"/.[!.]* "${DATA_DIR}/.local/share/opencode"/..?*; do
+      [ -e "$path" ] || continue
+      case "$path" in
+        "${DATA_DIR}/.local/share/opencode/auth.json"|\
+        "${DATA_DIR}/.local/share/opencode/opencode.db"|\
+        "${DATA_DIR}/.local/share/opencode/opencode.db-shm"|\
+        "${DATA_DIR}/.local/share/opencode/opencode.db-wal"|\
+        "${DATA_DIR}/.local/share/opencode/snapshot"|\
+        "${DATA_DIR}/.local/share/opencode/storage") ;;
+        *) TARGETS+=("$path") ;;
+      esac
+    done
+  fi
+
+  if [ -d "${DATA_DIR}/.local/share/opencode/storage" ]; then
+    for path in "${DATA_DIR}/.local/share/opencode/storage"/* "${DATA_DIR}/.local/share/opencode/storage"/.[!.]* "${DATA_DIR}/.local/share/opencode/storage"/..?*; do
+      [ -e "$path" ] || continue
+      case "$path" in
+        "${DATA_DIR}/.local/share/opencode/storage/session_diff") ;;
+        *) TARGETS+=("$path") ;;
+      esac
+    done
+  fi
+}
+
+target_is_covered() {
+  local candidate="$1"
+  local target
+  for target in "${TARGETS[@]}"; do
+    if [[ "$candidate" == "$target" || "$candidate" == "$target"/* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+add_cleanup_targets
+
+if [ -d "$DATA_DIR" ]; then
+  while IFS= read -r -d '' node_modules_dir; do
+    if ! target_is_covered "$node_modules_dir"; then
+      TARGETS+=("$node_modules_dir")
+    fi
+  done < <(find "$DATA_DIR" -type d -name node_modules -prune -print0)
+fi
+
+normalize_targets() {
+  local candidate
+  local other
+  local existing
+  local covered
+  declare -a normalized=()
+
+  for candidate in "${TARGETS[@]}"; do
+    covered=false
+    for other in "${TARGETS[@]}"; do
+      if [[ "$candidate" != "$other" && "$candidate" == "$other"/* ]]; then
+        covered=true
+        break
+      fi
+    done
+    [ "$covered" = false ] || continue
+
+    for existing in "${normalized[@]}"; do
+      if [ "$candidate" = "$existing" ]; then
+        covered=true
+        break
+      fi
+    done
+    [ "$covered" = false ] || continue
+
+    normalized+=("$candidate")
+  done
+
+  TARGETS=("${normalized[@]}")
+}
+
+normalize_targets
 
 removed=0
 freed_desc=""
