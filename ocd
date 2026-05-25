@@ -37,6 +37,7 @@ CONTAINER_WORKSPACE="/workspaces/${WORKSPACE_BASENAME}-${CURRENT_DIR_HASH}"
 OMO_PROFILE=""
 WEB_MODE=false
 TMUX_MODE=false
+DEBUG_MODE=false
 WEB_PORT="${OCD_WEB_PORT:-4096}"
 DOCKER_ARGS=()
 while [[ $# -gt 0 ]]; do
@@ -56,6 +57,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --tmux)
             TMUX_MODE=true
+            shift
+            ;;
+        --debug)
+            DEBUG_MODE=true
             shift
             ;;
         --port)
@@ -186,6 +191,11 @@ if [ -t 1 ]; then
 fi
 
 # Run the container
+RM_ARGS=(--rm)
+if [ "$DEBUG_MODE" = true ]; then
+    RM_ARGS=()
+fi
+
 if [ "$WEB_MODE" = true ]; then
     echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
 elif [ "$TMUX_MODE" = true ]; then
@@ -195,7 +205,7 @@ else
 fi
 set +e
 docker run -it \
-    --rm \
+    "${RM_ARGS[@]}" \
     --entrypoint "" \
     --name "${CONTAINER_NAME}" \
     --network host \
@@ -227,4 +237,11 @@ docker run -it \
     "${IMAGE_NAME}" \
     "${OPENCODE_CMD[@]}"
 DOCKER_STATUS=$?
+if [ "$DEBUG_MODE" = true ]; then
+    echo "Docker exited with status ${DOCKER_STATUS}."
+    echo "Debug container '${CONTAINER_NAME}' was preserved."
+    echo "Inspect it with: docker logs ${CONTAINER_NAME}"
+    echo "Inspect exit state with: docker inspect ${CONTAINER_NAME}"
+    echo "Remove it with: docker rm ${CONTAINER_NAME}"
+fi
 exit "$DOCKER_STATUS"

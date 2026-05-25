@@ -152,6 +152,19 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 | `OPENCODE_SERVER_PASSWORD` | Basic auth password | (none — unauthenticated) |
 | `OPENCODE_SERVER_USERNAME` | Basic auth username | `opencode` |
 
+### Debugging Container Exits
+
+Use `./ocd --debug` when OpenCode exits unexpectedly. Debug mode keeps the `ocd` container instead of removing it and prints commands for collecting evidence:
+
+```bash
+./ocd --debug
+docker logs ocd
+docker inspect ocd
+docker rm ocd
+```
+
+Because the preserved container keeps the fixed name `ocd`, remove it with `docker rm ocd` before starting another `ocd` session.
+
 ## Directory Structure
 
 ```
