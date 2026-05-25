@@ -104,7 +104,7 @@ When making changes, usually inspect these files together:
 - `config/*.local.json` and generated `*.merged.json` are gitignored and may contain secrets or machine-specific state.
 - `data/` is intentionally ignored except tracked placeholders; do not treat it as stable source.
 - Web mode is unauthenticated unless `OPENCODE_SERVER_PASSWORD` is set.
-- Port auto-increment logic exists in `ocd`; preserve it if touching web-mode startup.
+- Web mode uses the requested port directly and fails if that port is unavailable; do not reintroduce port auto-increment.
 - X11 clipboard mounting is conditional on `/tmp/.X11-unix`; do not assume GUI support is always available.
 
 ## External references that match this repo

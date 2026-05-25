@@ -136,9 +136,7 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ./ocd --web --profile minimax        # Combine with model profiles
 ```
 
-Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI.
-
-**Port auto-detection:** If the default port is already in use (e.g., another `ocd --web` instance), it automatically finds the next available port and prints which one it chose.
+Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI. Web mode uses the requested port and fails if that port is unavailable.
 
 **Authentication (optional):** Set `OPENCODE_SERVER_PASSWORD` to require basic auth:
 ```bash
@@ -180,7 +178,7 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
-- Generates unique container name per run
+- Uses a deterministic container name so only one `ocd` container can run at a time
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session

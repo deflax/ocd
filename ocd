@@ -78,7 +78,7 @@ set -- "${DOCKER_ARGS[@]}"
 # Configuration
 IMAGE_NAME="ocd:latest"
 CONTAINER_NAME_PREFIX="${OCD_CONTAINER_NAME_PREFIX:-ocd}"
-CONTAINER_NAME="${CONTAINER_NAME_PREFIX}-$(date +%Y%m%d-%H%M%S)-$$"
+CONTAINER_NAME="${CONTAINER_NAME_PREFIX}"
 
 # Check if image exists
 if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
@@ -150,13 +150,6 @@ if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
     echo "Error: --tmux cannot be combined with --web."
     exit 1
 elif [ "$WEB_MODE" = true ]; then
-    # Auto-detect available port if the requested one is in use
-    while ss -tln 2>/dev/null | grep -q ":${WEB_PORT}\b" \
-       || docker ps --format '{{.Ports}}' 2>/dev/null | grep -q ":${WEB_PORT}->"; do
-        echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
-        WEB_PORT=$((WEB_PORT + 1))
-    done
-
     OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
 
     if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
