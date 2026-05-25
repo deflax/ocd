@@ -178,7 +178,7 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
-- Uses a deterministic container name so only one `ocd` container can run at a time
+- Uses the fixed Docker container name `ocd` so only one `ocd` container can run at a time
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session

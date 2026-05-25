@@ -77,8 +77,7 @@ set -- "${DOCKER_ARGS[@]}"
 
 # Configuration
 IMAGE_NAME="ocd:latest"
-CONTAINER_NAME_PREFIX="${OCD_CONTAINER_NAME_PREFIX:-ocd}"
-CONTAINER_NAME="${CONTAINER_NAME_PREFIX}"
+CONTAINER_NAME="ocd"
 
 # Check if image exists
 if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
