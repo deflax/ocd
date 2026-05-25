@@ -174,18 +174,6 @@ if [ -n "${OPENCODE_SERVER_USERNAME:-}" ]; then
     SERVER_ENV+=(-e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME}")
 fi
 
-ORIGINAL_STTY=""
-restore_terminal() {
-    if [ -n "$ORIGINAL_STTY" ] && [ -t 0 ]; then
-        stty "$ORIGINAL_STTY" 2>/dev/null || stty sane 2>/dev/null || true
-    fi
-}
-
-if [ -t 0 ]; then
-    ORIGINAL_STTY="$(stty -g 2>/dev/null || true)"
-    trap restore_terminal EXIT
-fi
-
 # Run the container
 if [ "$WEB_MODE" = true ]; then
     echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
@@ -228,5 +216,4 @@ docker run -it \
     "${IMAGE_NAME}" \
     "${OPENCODE_CMD[@]}"
 DOCKER_STATUS=$?
-restore_terminal
 exit "$DOCKER_STATUS"
