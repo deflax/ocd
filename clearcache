@@ -58,7 +58,7 @@ add_cleanup_targets() {
   for path in "$DATA_DIR"/* "$DATA_DIR"/.[!.]* "$DATA_DIR"/..?*; do
     [ -e "$path" ] || continue
     case "$path" in
-      "${DATA_DIR}/.config"|"${DATA_DIR}/.local") ;;
+      "${DATA_DIR}/.config"|"${DATA_DIR}/.gitkeep"|"${DATA_DIR}/.local") ;;
       *) TARGETS+=("$path") ;;
     esac
   done
