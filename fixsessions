@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Get the actual script location (resolving symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$SCRIPT_DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+DATA_DIR="${SCRIPT_DIR}/data"
+OPENCODE_DB_HOST="${DATA_DIR}/.local/share/opencode/opencode.db"
+DRY_RUN=false
+
+usage() {
+    cat <<'EOF'
+Usage: ./fixsessions [--dry-run]
+
+Repairs legacy OpenCode sessions that were stored under the old shared
+`global` project in data/.local/share/opencode/opencode.db.
+
+Options:
+  --dry-run    Show what would be repaired without changing the database
+  -h, --help   Show this help
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Error: unknown argument: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+
+if [ ! -f "${OPENCODE_DB_HOST}" ]; then
+    echo "No OpenCode database found at ${OPENCODE_DB_HOST}. Nothing to repair."
+    exit 0
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: python3 is required to repair OpenCode sessions." >&2
+    exit 1
+fi
+
+python3 - "${OPENCODE_DB_HOST}" "${DRY_RUN}" <<'PYTHON'
+import hashlib
+import sqlite3
+import sys
+import time
+
+DB_PATH = sys.argv[1]
+DRY_RUN = sys.argv[2] == "true"
+connection = None
+
+try:
+    connection = sqlite3.connect(DB_PATH, timeout=5)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA busy_timeout = 5000")
+    connection.execute("BEGIN IMMEDIATE")
+
+    legacy_directories = [
+        row["directory"]
+        for row in connection.execute(
+            """
+            SELECT directory, COUNT(*) AS count
+            FROM session
+            WHERE project_id = 'global'
+              AND directory IS NOT NULL
+              AND directory != ''
+            GROUP BY directory
+            ORDER BY directory
+            """
+        )
+    ]
+
+    if not legacy_directories:
+        connection.rollback()
+        print("No legacy global OpenCode sessions found.")
+        sys.exit(0)
+
+    plan = []
+    for directory in legacy_directories:
+        existing = connection.execute(
+            """
+            SELECT id
+            FROM project
+            WHERE worktree = ?
+              AND id != 'global'
+            ORDER BY time_updated DESC, time_created DESC
+            LIMIT 1
+            """,
+            (directory,),
+        ).fetchone()
+        project_id = existing["id"] if existing else "legacy-" + hashlib.sha1(directory.encode()).hexdigest()
+        count = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM session
+            WHERE project_id = 'global'
+              AND directory = ?
+            """,
+            (directory,),
+        ).fetchone()["count"]
+        plan.append((directory, project_id, count, existing is None))
+
+    if DRY_RUN:
+        connection.rollback()
+        print("Legacy global OpenCode sessions that would be repaired:")
+        for directory, project_id, count, creates_project in plan:
+            suffix = " (new legacy project)" if creates_project else ""
+            print(f"  {count} session(s): {directory} -> {project_id}{suffix}")
+        sys.exit(0)
+
+    repaired = 0
+    for directory, project_id, _count, creates_project in plan:
+        if creates_project:
+            now = int(time.time() * 1000)
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO project (
+                    id, worktree, vcs, name, time_created, time_updated, sandboxes
+                )
+                VALUES (?, ?, NULL, NULL, ?, ?, '[]')
+                """,
+                (project_id, directory, now, now),
+            )
+
+        result = connection.execute(
+            """
+            UPDATE session
+            SET project_id = ?, path = ''
+            WHERE project_id = 'global'
+              AND directory = ?
+            """,
+            (project_id, directory),
+        )
+        repaired += result.rowcount
+
+    connection.commit()
+    print(f"Repaired {repaired} legacy OpenCode session(s) from the global project.")
+except sqlite3.Error as exc:
+    if connection is not None:
+        try:
+            connection.rollback()
+        except sqlite3.Error:
+            pass
+    print(f"Error: could not repair legacy OpenCode sessions: {exc}", file=sys.stderr)
+    sys.exit(1)
+finally:
+    if connection is not None:
+        connection.close()
+PYTHON

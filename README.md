@@ -29,6 +29,8 @@ ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 
 Use `./clearcache` to remove persistent runtime data when stale package state interferes with OpenCode or application builds. It preserves OpenCode sessions, login state, and configuration: `data/.config/` except discovered `node_modules`, `data/.local/share/opencode/auth.json`, `opencode.db*`, `snapshot/`, and `storage/session_diff/`. Run `./clearcache --dry-run` first to see what would be deleted.
 
+Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still attached to the old shared `global` project. Run `./fixsessions` to move those sessions into per-directory project records so they stop appearing in unrelated workspaces. The repair updates only `data/.local/share/opencode/opencode.db`; it preserves auth and does not delete sessions.
+
 ## Configuration
 
 | Path | Description |
@@ -173,6 +175,7 @@ Remove the preserved debug container with the printed `docker rm` command when y
 ├── build           # Build the Docker image
 ├── ocd             # Run the container
 ├── clearcache      # Clear caches
+├── fixsessions     # Repair legacy OpenCode session project scoping
 ├── config/         # OpenCode and oh-my-openagent configs
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
@@ -200,7 +203,7 @@ The `ocd` script:
 - Clears the image `opencode` entrypoint at launch, then explicitly runs either `opencode`, `opencode web`, or `tmux`
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
-Old sessions are not migrated; this only affects new launches.
+Old sessions are not migrated automatically. If legacy sessions appear across unrelated workspaces, run `./fixsessions --dry-run` and then `./fixsessions` to repair the old shared `global` project records.
 
 ## Self-Hosted Model Configuration
 
