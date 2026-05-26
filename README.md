@@ -196,7 +196,7 @@ Remove the preserved debug container with the printed `docker rm` command when y
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates a unique Docker container name per run so multiple `ocd` containers can run at a time
-- Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
+- Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and passes that path to `opencode` so new TUI sessions scope to the mounted workspace
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
 - Mounts `config/tmux.conf` to `/home/coder/.tmux.conf` for container-internal tmux sessions
