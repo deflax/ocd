@@ -136,7 +136,7 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ./ocd --web --profile minimax        # Combine with model profiles
 ```
 
-Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI. Web mode uses the requested port and fails if that port is unavailable.
+Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI. Web mode starts with the requested port and automatically increments to the next available port if it is already in use.
 
 **Authentication (optional):** Set `OPENCODE_SERVER_PASSWORD` to require basic auth:
 ```bash
@@ -154,16 +154,17 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 
 ### Debugging Container Exits
 
-Use `./ocd --debug` when OpenCode exits unexpectedly. Debug mode keeps the `ocd` container instead of removing it and prints commands for collecting evidence:
+Use `./ocd --debug` when OpenCode exits unexpectedly. Debug mode keeps the generated container instead of removing it and prints commands for collecting evidence:
 
 ```bash
 ./ocd --debug
-docker logs ocd
-docker inspect ocd
-docker rm ocd
+# The launcher prints the generated container name:
+docker logs <container-name>
+docker inspect <container-name>
+docker rm <container-name>
 ```
 
-Because the preserved container keeps the fixed name `ocd`, remove it with `docker rm ocd` before starting another `ocd` session.
+Remove the preserved debug container with the printed `docker rm` command when you no longer need it.
 
 ## Directory Structure
 
@@ -191,7 +192,7 @@ Because the preserved container keeps the fixed name `ocd`, remove it with `dock
 
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
-- Uses the fixed Docker container name `ocd` so only one `ocd` container can run at a time
+- Generates a unique Docker container name per run so multiple `ocd` containers can run at a time
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path so new OpenCode sessions scope correctly with newer session behavior
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session

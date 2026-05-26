@@ -82,7 +82,7 @@ set -- "${DOCKER_ARGS[@]}"
 
 # Configuration
 IMAGE_NAME="ocd:latest"
-CONTAINER_NAME="ocd"
+CONTAINER_NAME="ocd-$(date +%Y%m%d-%H%M%S)-$$"
 
 # Check if image exists
 if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
@@ -150,10 +150,19 @@ if [ -d "${SCRIPT_DIR}/config/agents" ]; then
 fi
 
 # Configure command (network is always --network host for Ollama compatibility)
+port_in_use() {
+    docker ps --format '{{.Ports}}' | grep -q ":$1->" || (: <>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
+}
+
 if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
     echo "Error: --tmux cannot be combined with --web."
     exit 1
 elif [ "$WEB_MODE" = true ]; then
+    while port_in_use "${WEB_PORT}"; do
+        echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
+        WEB_PORT=$((WEB_PORT + 1))
+    done
+
     OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
 
     if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
