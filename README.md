@@ -197,6 +197,7 @@ The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates a unique Docker container name per run so multiple `ocd` containers can run at a time
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and passes that path to `opencode` so new TUI sessions scope to the mounted workspace
+- Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
 - Mounts `config/tmux.conf` to `/home/coder/.tmux.conf` for container-internal tmux sessions

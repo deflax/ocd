@@ -137,6 +137,30 @@ if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
     OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
 fi
 
+ensure_opencode_project_id() {
+    if ! git -C "${CURRENT_DIR}" rev-parse --git-dir >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if git -C "${CURRENT_DIR}" rev-parse --verify HEAD >/dev/null 2>&1; then
+        return 0
+    fi
+
+    GIT_COMMON_DIR="$(git -C "${CURRENT_DIR}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"
+    if [ -z "${GIT_COMMON_DIR}" ] || [ ! -d "${GIT_COMMON_DIR}" ]; then
+        return 0
+    fi
+
+    OPENCODE_PROJECT_ID="ocd-${CURRENT_DIR_HASH}"
+    OPENCODE_PROJECT_CACHE="${GIT_COMMON_DIR}/opencode"
+    if [ ! -s "${OPENCODE_PROJECT_CACHE}" ]; then
+        printf '%s' "${OPENCODE_PROJECT_ID}" > "${OPENCODE_PROJECT_CACHE}"
+        echo "Seeded OpenCode project id for no-commit git repo: ${OPENCODE_PROJECT_ID}"
+    fi
+}
+
+ensure_opencode_project_id
+
 # X11 clipboard support: mount the socket dir only if it exists
 X11_MOUNT=()
 if [ -d /tmp/.X11-unix ]; then
