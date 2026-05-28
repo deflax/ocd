@@ -27,7 +27,7 @@ ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 
 ## Cache Cleanup
 
-Use `./clearcache` to remove persistent runtime data when stale package state interferes with OpenCode or application builds. It preserves OpenCode sessions, login state, and configuration: `data/.config/` except discovered `node_modules`, `data/.local/share/opencode/auth.json`, `opencode.db*`, `snapshot/`, and `storage/session_diff/`. Run `./clearcache --dry-run` first to see what would be deleted.
+Use `./clearcache` to remove persistent runtime data when stale package state interferes with OpenCode or application builds. It preserves OpenCode sessions and login state: `data/.local/share/opencode/auth.json`, `opencode.db*`, `snapshot/`, and `storage/session_diff/`. Generated config contents under `data/.config/`, including stale `data/.config/opencode` package files or JSONC files, are removed because wrapper config is mounted from `config/`. Run `./clearcache --dry-run` first to see what would be deleted.
 
 Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still attached to the old shared `global` project. Run `./fixsessions` to move those sessions into per-directory project records so they stop appearing in unrelated workspaces. The repair updates only `data/.local/share/opencode/opencode.db`; it preserves auth and does not delete sessions.
 

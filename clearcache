@@ -17,11 +17,11 @@ usage() {
   cat <<'EOF'
 Usage: ./clearcache [--dry-run]
 
-Clears persistent runtime data while preserving OpenCode sessions, login state,
-and configuration.
+Clears persistent runtime data while preserving OpenCode sessions and login state.
+Wrapper configuration is preserved in config/.
 
 Preserves:
-  data/.config/               OpenCode settings and plugin metadata, except node_modules
+  data/.config/               Directory only; stale generated contents are removed
   data/.local/share/opencode/auth.json
   data/.local/share/opencode/opencode.db*
   data/.local/share/opencode/snapshot/
@@ -62,6 +62,13 @@ add_cleanup_targets() {
       *) TARGETS+=("$path") ;;
     esac
   done
+
+  if [ -d "${DATA_DIR}/.config" ]; then
+    for path in "${DATA_DIR}/.config"/* "${DATA_DIR}/.config"/.[!.]* "${DATA_DIR}/.config"/..?*; do
+      [ -e "$path" ] || continue
+      TARGETS+=("$path")
+    done
+  fi
 
   if [ -d "${DATA_DIR}/.local" ]; then
     for path in "${DATA_DIR}/.local"/* "${DATA_DIR}/.local"/.[!.]* "${DATA_DIR}/.local"/..?*; do
