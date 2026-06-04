@@ -98,8 +98,12 @@ RUN npm install -g --prefix /usr/local \
     typescript@latest \
     typescript-language-server@latest
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 # Install Playwright browsers with system dependencies (supports both amd64 and arm64)
-RUN npx playwright install --with-deps chromium
+RUN mkdir -p "${PLAYWRIGHT_BROWSERS_PATH}" \
+    && npx playwright install --with-deps chromium \
+    && chmod -R a+rX "${PLAYWRIGHT_BROWSERS_PATH}"
 
 RUN rm -rf /var/lib/apt/lists/*
 
