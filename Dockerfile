@@ -89,7 +89,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 #    && bunx --version
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.16.2 \
+    opencode-ai@1.17.1 \
     @ast-grep/cli@latest \
     @biomejs/biome@latest \
     @vue/language-server@latest \
