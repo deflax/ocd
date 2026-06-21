@@ -94,20 +94,9 @@ RUN npm install -g --prefix /usr/local \
     @biomejs/biome@latest \
     @vue/language-server@latest \
     intelephense@latest \
-    playwright@latest \
     typescript@latest \
     typescript-language-server@latest
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# Install Playwright browsers with system dependencies (supports both amd64 and arm64)
-RUN mkdir -p "${PLAYWRIGHT_BROWSERS_PATH}" \
-    && npx playwright install --with-deps chromium \
-    && install -d /opt/google/chrome \
-    && chromium_path="$(find "${PLAYWRIGHT_BROWSERS_PATH}" -path '*/chrome-linux/chrome' -type f -print -quit)" \
-    && test -n "$chromium_path" \
-    && ln -sf "$chromium_path" /opt/google/chrome/chrome \
-    && chmod -R a+rX "${PLAYWRIGHT_BROWSERS_PATH}"
 
 RUN rm -rf /var/lib/apt/lists/*
 

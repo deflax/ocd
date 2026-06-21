@@ -64,8 +64,6 @@ If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) w
 
 Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
 
-The image includes Python as both `python3` and `python`, BasedPyright's `basedpyright-langserver`, CMake/CTest tooling, Terraform tooling as both `terraform` and `terraform-ls`, and Playwright with Chromium installed under the shared `/ms-playwright` browser path. The same Chromium binary is also exposed at `/opt/google/chrome/chrome` for Playwright tools and skills that expect a Chrome-compatible executable path, including browser screenshot QA. OpenCode can run common Python tests, Python LSP diagnostics, CMake/CTest workflows, Terraform formatting, Terraform LSP diagnostics, and headless Chromium browser QA inside the container after rebuilding with `./build`.
-
 The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode and top-level `tmux.enabled` integration are enabled in the committed model profiles. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 
 Use `./ocd --tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. Extra OpenCode arguments are forwarded after the workspace path, and `--profile` still selects the mounted oh-my-openagent profile:
