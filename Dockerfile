@@ -90,12 +90,18 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 
 RUN npm install -g --prefix /usr/local \
     opencode-ai@1.17.13 \
+    playwright@latest \
     @ast-grep/cli@latest \
     @biomejs/biome@latest \
     @vue/language-server@latest \
     intelephense@latest \
     typescript@latest \
     typescript-language-server@latest
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+RUN playwright install --with-deps chrome \
+    && chmod -R a+rX /ms-playwright
 
 
 RUN rm -rf /var/lib/apt/lists/*

@@ -8,7 +8,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Mounts your current working directory at a stable unique path under `/workspaces/...`
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
-- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, Playwright Chromium, Node.js language servers, and more
+- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, Playwright Chrome browser runtime, Node.js language servers, and more
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
 - Web UI mode for browser-based access
