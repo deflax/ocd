@@ -47,7 +47,7 @@
     "reserved": 10000
   },
   "plugin": [
-    "oh-my-openagent@4.14.1",
+    "oh-my-openagent@4.15.1",
     "@slkiser/opencode-quota@3.10.1"
   ]
 }
