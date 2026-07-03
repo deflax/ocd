@@ -167,6 +167,11 @@ if [ -d /tmp/.X11-unix ]; then
     X11_MOUNT=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
 fi
 
+XAUTHORITY_ARGS=()
+if [ -n "${XAUTHORITY:-}" ] && [ -f "${XAUTHORITY}" ]; then
+    XAUTHORITY_ARGS=(-v "${XAUTHORITY}:/tmp/.docker.xauth:ro" -e XAUTHORITY=/tmp/.docker.xauth)
+fi
+
 # Custom OpenCode agents: Markdown files in config/agents are loaded via OPENCODE_CONFIG_DIR.
 AGENTS_MOUNT=()
 if [ -d "${SCRIPT_DIR}/config/agents" ]; then
@@ -242,6 +247,7 @@ docker run -it \
     --entrypoint "" \
     --name "${CONTAINER_NAME}" \
     --network host \
+    --shm-size=1g \
     -v "${SCRIPT_DIR}/data:/home/coder:rw" \
     -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
     -v "${OPENCODE_QUOTA_CONFIG_HOST}:/config/opencode-quota/quota-toast.json:ro" \
@@ -251,6 +257,7 @@ docker run -it \
     "${AGENTS_MOUNT[@]}" \
     -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
     "${X11_MOUNT[@]}" \
+    "${XAUTHORITY_ARGS[@]}" \
     -w "${CONTAINER_WORKSPACE}" \
     -e HOME=/home/coder \
     -e PATH="/home/coder/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin" \

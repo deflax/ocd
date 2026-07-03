@@ -56,9 +56,13 @@ On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. 
 
 The base `config/opencode.json` also carries shell permissions. Current defaults allow bash commands broadly while denying `git push`, `sudo`, and `su` patterns.
 
-### X11 Clipboard Support
+### X11 And Headed Chrome Support
 
-If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) with `DISPLAY` for clipboard sharing. Skipped on Wayland-only or macOS hosts.
+If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) with `DISPLAY` for clipboard sharing and headed browser windows. If `XAUTHORITY` points to an existing host file, the launcher also mounts it read-only so Chrome launched by Playwright can authenticate to the X server.
+
+The container uses `--shm-size=1g` because headed Chrome can hang or render blank surfaces with Docker's small default shared-memory mount. This keeps the browser observable on the host without switching Playwright MCP to headless mode by default.
+
+Headed Chrome support expects Linux X11 or XWayland. On hosts with stricter X server access control, you may still need to allow the container user through your normal host policy, for example with `xhost` or a valid `XAUTHORITY` file. Wayland-only and macOS hosts do not expose `/tmp/.X11-unix` in the same way, so headed browser windows may need a different display bridge.
 
 ### oh-my-openagent
 
