@@ -54,6 +54,11 @@
     "playwright": {
       "type": "local",
       "command": [
+        "env",
+        "-u",
+        "PLAYWRIGHT_MCP_BROWSER",
+        "-u",
+        "PLAYWRIGHT_MCP_EXECUTABLE_PATH",
         "npx",
         "-y",
         "@playwright/mcp@latest",
