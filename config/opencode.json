@@ -57,8 +57,6 @@
         "env",
         "-u",
         "PLAYWRIGHT_MCP_BROWSER",
-        "-u",
-        "PLAYWRIGHT_MCP_EXECUTABLE_PATH",
         "playwright-mcp",
         "--isolated",
         "--config",

@@ -101,7 +101,12 @@ RUN npm install -g --prefix /usr/local \
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 RUN npx @playwright/mcp install-browser chromium --with-deps \
+    && CHROMIUM_BIN="$(find /ms-playwright -path '*/chrome-linux*/chrome' -type f | sort | tail -n 1)" \
+    && test -n "$CHROMIUM_BIN" \
+    && ln -sf "$CHROMIUM_BIN" /usr/local/bin/playwright-chromium \
     && chmod -R a+rX /ms-playwright
+
+ENV PLAYWRIGHT_MCP_EXECUTABLE_PATH=/usr/local/bin/playwright-chromium
 
 
 RUN rm -rf /var/lib/apt/lists/*
