@@ -179,7 +179,7 @@ if [ "$(uname -s)" = "Darwin" ] && [ -z "${OCD_DISPLAY:-}" ]; then
         ""|:*)
             HOST_DISPLAY="host.docker.internal:0"
             ;;
-        /tmp/*|/private/tmp/*)
+        /tmp/*|/private/tmp/*|/var/run/com.apple.launchd.*)
             HOST_DISPLAY="host.docker.internal:0"
             ;;
     esac
