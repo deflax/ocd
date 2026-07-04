@@ -6,7 +6,7 @@
       "channel": "chrome",
       "headless": false,
       "args": [
-        "--no-sandbox",
+        "--test-type",
         "--disable-gpu",
         "--disable-software-rasterizer",
         "--disable-features=CDPScreenshotNewSurface"
