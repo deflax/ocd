@@ -63,6 +63,8 @@ If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) w
 
 The container uses `--shm-size=1g` because headed Chrome can hang or render blank surfaces with Docker's small default shared-memory mount. Playwright MCP also runs Chrome with software-only rendering flags so the browser remains observable on the host without passing GPU devices into the container or switching Playwright MCP to headless mode by default.
 
+The launcher uses Docker's `--init` shim so orphaned Chrome and crashpad helper processes are reaped when browser sessions exit. This prevents headed browser retries from accumulating zombie processes under the container's PID 1.
+
 Headed Chrome support expects Linux X11, XWayland, or macOS XQuartz. On hosts with stricter X server access control, you may still need to allow the container user through your normal host policy, for example with `xhost` or a valid `XAUTHORITY` file.
 
 On macOS, Docker Desktop cannot use XQuartz's local Unix socket path directly. When `ocd` runs on Darwin and `OCD_DISPLAY` is not set, it rewrites an empty, local, or `:0`-style `DISPLAY` to `host.docker.internal:0` for the container. Start XQuartz, enable network clients if needed, allow local clients with `xhost`, then run `./ocd`. Override the value explicitly with `OCD_DISPLAY=... ./ocd` if your XQuartz setup uses a different display endpoint.

@@ -257,6 +257,7 @@ fi
 set +e
 docker run -it \
     "${RM_ARGS[@]}" \
+    --init \
     --entrypoint "" \
     --name "${CONTAINER_NAME}" \
     --network host \
