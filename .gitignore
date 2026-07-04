@@ -10,5 +10,6 @@ config/oh-my-openagent.merged.json
 
 # Temporary files (cloned repos, build artifacts)
 tmp/
+.playwright-mcp/
 .sisyphus/
 .omo/
