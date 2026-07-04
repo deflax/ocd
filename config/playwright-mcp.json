@@ -4,6 +4,7 @@
     "isolated": true,
     "launchOptions": {
       "headless": false,
+      "chromiumSandbox": false,
       "args": [
         "--test-type",
         "--disable-gpu",
