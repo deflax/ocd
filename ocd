@@ -173,6 +173,18 @@ if [ -n "${XAUTHORITY:-}" ] && [ -f "${XAUTHORITY}" ]; then
     XAUTHORITY_ARGS=(-v "${XAUTHORITY}:/tmp/.docker.xauth:ro" -e XAUTHORITY=/tmp/.docker.xauth)
 fi
 
+HOST_DISPLAY="${OCD_DISPLAY:-${DISPLAY:-}}"
+if [ "$(uname -s)" = "Darwin" ] && [ -z "${OCD_DISPLAY:-}" ]; then
+    case "${HOST_DISPLAY}" in
+        ""|:*)
+            HOST_DISPLAY="host.docker.internal:0"
+            ;;
+        /tmp/*|/private/tmp/*)
+            HOST_DISPLAY="host.docker.internal:0"
+            ;;
+    esac
+fi
+
 # Custom OpenCode agents: Markdown files in config/agents are loaded via OPENCODE_CONFIG_DIR.
 AGENTS_MOUNT=()
 if [ -d "${SCRIPT_DIR}/config/agents" ]; then
@@ -263,7 +275,7 @@ docker run -it \
     -w "${CONTAINER_WORKSPACE}" \
     -e HOME=/home/coder \
     -e PATH="/home/coder/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin" \
-    -e DISPLAY="${DISPLAY:-}" \
+    -e DISPLAY="${HOST_DISPLAY}" \
     -e TERM=xterm-256color \
     -e LANG=C.UTF-8 \
     -e LC_ALL=C.UTF-8 \
