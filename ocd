@@ -162,6 +162,38 @@ ensure_opencode_project_id() {
 
 ensure_opencode_project_id
 
+setup_macos_xquartz() {
+    if [ "$(uname -s)" != "Darwin" ]; then
+        return 0
+    fi
+
+    if [ -d /Applications/Utilities/XQuartz.app ] || [ -d /Applications/XQuartz.app ]; then
+        /usr/bin/open -a XQuartz >/dev/null 2>&1 || true
+    else
+        return 0
+    fi
+
+    XHOST_BIN="$(command -v xhost 2>/dev/null || true)"
+    if [ -z "${XHOST_BIN}" ] && [ -x /opt/X11/bin/xhost ]; then
+        XHOST_BIN=/opt/X11/bin/xhost
+    fi
+
+    if [ -z "${XHOST_BIN}" ]; then
+        return 0
+    fi
+
+    XHOST_DISPLAY="${DISPLAY:-:0}"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        if DISPLAY="${XHOST_DISPLAY}" "${XHOST_BIN}" +127.0.0.1 >/dev/null 2>&1 && \
+            DISPLAY="${XHOST_DISPLAY}" "${XHOST_BIN}" +localhost >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 0.5
+    done
+}
+
+setup_macos_xquartz
+
 # X11 clipboard support: mount the socket dir only if it exists
 X11_MOUNT=()
 if [ -d /tmp/.X11-unix ]; then
