@@ -102,8 +102,11 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 RUN npx @playwright/mcp install-browser chromium --with-deps \
     && CHROMIUM_BIN="$(find /ms-playwright -path '*/chrome-linux*/chrome' -type f | sort | tail -n 1)" \
+    && FFMPEG_BIN="$(find /ms-playwright -path '*/ffmpeg-linux' -type f | sort | tail -n 1)" \
     && test -n "$CHROMIUM_BIN" \
+    && test -n "$FFMPEG_BIN" \
     && ln -sf "$CHROMIUM_BIN" /usr/local/bin/playwright-chromium \
+    && ln -sf "$FFMPEG_BIN" /usr/local/bin/playwright-ffmpeg \
     && chmod -R a+rX /ms-playwright
 
 ENV PLAYWRIGHT_MCP_EXECUTABLE_PATH=/usr/local/bin/playwright-chromium
