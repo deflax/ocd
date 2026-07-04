@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tree \
     file \
     zip \
+    ffmpeg \
     diffutils \
     fd-find \
     patch \
