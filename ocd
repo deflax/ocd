@@ -2,141 +2,130 @@
 
 set -e
 
-# Get the actual script location (resolving symlinks)
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do
+resolve_script_dir() {
+    local SOURCE
+    SOURCE="${BASH_SOURCE[0]}"
+    while [ -h "$SOURCE" ]; do
+        SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+        SOURCE="$(readlink "$SOURCE")"
+        [[ $SOURCE != /* ]] && SOURCE="$SCRIPT_DIR/$SOURCE"
+    done
     SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-    SOURCE="$(readlink "$SOURCE")"
-    [[ $SOURCE != /* ]] && SOURCE="$SCRIPT_DIR/$SOURCE"
-done
-SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+}
 
-# Get the current working directory (where script is run from)
-CURRENT_DIR="$(pwd -P)"
+sanitize_workspace_basename() {
+    WORKSPACE_BASENAME="$(basename "$CURRENT_DIR")"
+    WORKSPACE_BASENAME="${WORKSPACE_BASENAME//[^A-Za-z0-9._-]/-}"
+    WORKSPACE_BASENAME="${WORKSPACE_BASENAME#-}"
+    WORKSPACE_BASENAME="${WORKSPACE_BASENAME%-}"
+    if [ -z "$WORKSPACE_BASENAME" ]; then
+        WORKSPACE_BASENAME="workspace"
+    fi
+}
 
-WORKSPACE_BASENAME="$(basename "$CURRENT_DIR")"
-WORKSPACE_BASENAME="${WORKSPACE_BASENAME//[^A-Za-z0-9._-]/-}"
-WORKSPACE_BASENAME="${WORKSPACE_BASENAME#-}"
-WORKSPACE_BASENAME="${WORKSPACE_BASENAME%-}"
-if [ -z "$WORKSPACE_BASENAME" ]; then
-    WORKSPACE_BASENAME="workspace"
-fi
-
-if command -v sha256sum >/dev/null 2>&1; then
-    CURRENT_DIR_HASH="$(printf '%s' "$CURRENT_DIR" | sha256sum | cut -c1-12)"
-elif command -v shasum >/dev/null 2>&1; then
-    CURRENT_DIR_HASH="$(printf '%s' "$CURRENT_DIR" | shasum -a 256 | cut -c1-12)"
-else
-    echo "Error: neither sha256sum nor shasum is available to hash the workspace path."
-    exit 1
-fi
-
-CONTAINER_WORKSPACE="/workspaces/${WORKSPACE_BASENAME}-${CURRENT_DIR_HASH}"
-
-# Parse flags (must come before any Docker args)
-OMO_PROFILE=""
-WEB_MODE=false
-TMUX_MODE=false
-DEBUG_MODE=false
-WEB_PORT="${OCD_WEB_PORT:-4096}"
-DOCKER_ARGS=()
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --profile)
-            if [[ -n "${2:-}" ]]; then
-                OMO_PROFILE="$2"
-                shift 2
-            else
-                echo "Error: --profile requires a value (e.g., --profile minimax)"
-                exit 1
-            fi
-            ;;
-        --web)
-            WEB_MODE=true
-            shift
-            ;;
-        --tmux)
-            TMUX_MODE=true
-            shift
-            ;;
-        --debug)
-            DEBUG_MODE=true
-            shift
-            ;;
-        --port)
-            if [[ -n "${2:-}" ]]; then
-                WEB_PORT="$2"
-                shift 2
-            else
-                echo "Error: --port requires a value (e.g., --port 4096)"
-                exit 1
-            fi
-            ;;
-        *)
-            DOCKER_ARGS+=("$1")
-            shift
-            ;;
-    esac
-done
-set -- "${DOCKER_ARGS[@]}"
-
-# Configuration
-IMAGE_NAME="ocd:latest"
-CONTAINER_NAME="ocd-$(date +%Y%m%d-%H%M%S)-$$"
-
-# Check if image exists
-if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
-    echo "Error: Image '${IMAGE_NAME}' not found."
-    echo "Please run ./build first to build the image."
-    exit 1
-fi
-
-# Config: merge local overrides on top of base config if they exist.
-# Objects are merged recursively; arrays are appended with duplicate entries skipped.
-JQ_MERGE_FILTER='def merge_arrays($a; $b): reduce $b[] as $item ($a; if index($item) == null then . + [$item] else . end); def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) elif (($a[$key] | type) == "array" and ($b[$key] | type) == "array") then merge_arrays($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
-OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
-OPENCODE_QUOTA_CONFIG_HOST="${SCRIPT_DIR}/config/opencode-quota/quota-toast.json"
-PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
-TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
-TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
-if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
-    echo "Merging opencode.local.json into opencode.json..."
-    jq -s "$JQ_MERGE_FILTER" \
-        "${SCRIPT_DIR}/config/opencode.json" \
-        "${SCRIPT_DIR}/config/opencode.local.json" \
-        > "${SCRIPT_DIR}/config/opencode.merged.json"
-    OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
-fi
-
-# oh-my-openagent config: select base config based on --profile flag.
-# Available profiles are files named oh-my-openagent.<profile>.json in config/.
-# Default (no --profile) uses oh-my-openagent.json.
-# NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
-if [ -n "$OMO_PROFILE" ]; then
-    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.${OMO_PROFILE}.json"
-    if [ ! -f "$OMO_BASE_CONFIG" ]; then
-        echo "Error: Profile '${OMO_PROFILE}' not found (expected ${OMO_BASE_CONFIG})"
-        echo "Available profiles:"
-        for f in "${SCRIPT_DIR}"/config/oh-my-openagent.*.json; do
-            [ -f "$f" ] || continue
-            basename "$f" | sed 's/^oh-my-openagent\.//; s/\.json$//'  | grep -v '^local$\|^merged$'
-        done
+hash_workspace_path() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        CURRENT_DIR_HASH="$(printf '%s' "$CURRENT_DIR" | sha256sum | cut -c1-12)"
+    elif command -v shasum >/dev/null 2>&1; then
+        CURRENT_DIR_HASH="$(printf '%s' "$CURRENT_DIR" | shasum -a 256 | cut -c1-12)"
+    else
+        echo "Error: neither sha256sum nor shasum is available to hash the workspace path."
         exit 1
     fi
-    echo "Using oh-my-openagent profile: ${OMO_PROFILE}"
-else
-    OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.json"
-fi
+}
 
-OMO_CONFIG_HOST="$OMO_BASE_CONFIG"
-if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
-    echo "Merging oh-my-openagent.local.json into $(basename "$OMO_BASE_CONFIG")..."
-    jq -s "$JQ_MERGE_FILTER" \
-        "$OMO_BASE_CONFIG" \
-        "${SCRIPT_DIR}/config/oh-my-openagent.local.json" \
-        > "${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
-    OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
-fi
+parse_args() {
+    OMO_PROFILE=""
+    WEB_MODE=false
+    TMUX_MODE=false
+    DEBUG_MODE=false
+    WEB_PORT="${OCD_WEB_PORT:-4096}"
+    DOCKER_ARGS=()
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --profile)
+                if [[ -n "${2:-}" ]]; then
+                    OMO_PROFILE="$2"
+                    shift 2
+                else
+                    echo "Error: --profile requires a value (e.g., --profile minimax)"
+                    exit 1
+                fi
+                ;;
+            --web)
+                WEB_MODE=true
+                shift
+                ;;
+            --tmux)
+                TMUX_MODE=true
+                shift
+                ;;
+            --debug)
+                DEBUG_MODE=true
+                shift
+                ;;
+            --port)
+                if [[ -n "${2:-}" ]]; then
+                    WEB_PORT="$2"
+                    shift 2
+                else
+                    echo "Error: --port requires a value (e.g., --port 4096)"
+                    exit 1
+                fi
+                ;;
+            *)
+                DOCKER_ARGS+=("$1")
+                shift
+                ;;
+        esac
+    done
+}
+
+merge_opencode_config() {
+    if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
+        echo "Merging opencode.local.json into opencode.json..."
+        jq -s "$JQ_MERGE_FILTER" \
+            "${SCRIPT_DIR}/config/opencode.json" \
+            "${SCRIPT_DIR}/config/opencode.local.json" \
+            > "${SCRIPT_DIR}/config/opencode.merged.json"
+        OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
+    fi
+}
+
+print_available_profiles() {
+    for f in "${SCRIPT_DIR}"/config/oh-my-openagent.*.json; do
+        [ -f "$f" ] || continue
+        basename "$f" | sed 's/^oh-my-openagent\.//; s/\.json$//'  | grep -v '^local$\|^merged$'
+    done
+}
+
+select_omo_base_config() {
+    if [ -n "$OMO_PROFILE" ]; then
+        OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.${OMO_PROFILE}.json"
+        if [ ! -f "$OMO_BASE_CONFIG" ]; then
+            echo "Error: Profile '${OMO_PROFILE}' not found (expected ${OMO_BASE_CONFIG})"
+            echo "Available profiles:"
+            print_available_profiles
+            exit 1
+        fi
+        echo "Using oh-my-openagent profile: ${OMO_PROFILE}"
+    else
+        OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.json"
+    fi
+}
+
+merge_omo_config() {
+    OMO_CONFIG_HOST="$OMO_BASE_CONFIG"
+    if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
+        echo "Merging oh-my-openagent.local.json into $(basename "$OMO_BASE_CONFIG")..."
+        jq -s "$JQ_MERGE_FILTER" \
+            "$OMO_BASE_CONFIG" \
+            "${SCRIPT_DIR}/config/oh-my-openagent.local.json" \
+            > "${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
+        OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
+    fi
+}
 
 ensure_opencode_project_id() {
     if ! git -C "${CURRENT_DIR}" rev-parse --git-dir >/dev/null 2>&1; then
@@ -159,8 +148,6 @@ ensure_opencode_project_id() {
         echo "Seeded OpenCode project id for no-commit git repo: ${OPENCODE_PROJECT_ID}"
     fi
 }
-
-ensure_opencode_project_id
 
 setup_macos_xquartz() {
     if [ "$(uname -s)" != "Darwin" ]; then
@@ -192,144 +179,209 @@ setup_macos_xquartz() {
     done
 }
 
-setup_macos_xquartz
+prepare_x11_mounts() {
+    X11_MOUNT=()
+    if [ -d /tmp/.X11-unix ]; then
+        X11_MOUNT=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
+    fi
 
-# X11 clipboard support: mount the socket dir only if it exists
-X11_MOUNT=()
-if [ -d /tmp/.X11-unix ]; then
-    X11_MOUNT=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
-fi
+    XAUTHORITY_ARGS=()
+    if [ -n "${XAUTHORITY:-}" ] && [ -f "${XAUTHORITY}" ]; then
+        XAUTHORITY_ARGS=(-v "${XAUTHORITY}:/tmp/.docker.xauth:ro" -e XAUTHORITY=/tmp/.docker.xauth)
+    fi
+}
 
-XAUTHORITY_ARGS=()
-if [ -n "${XAUTHORITY:-}" ] && [ -f "${XAUTHORITY}" ]; then
-    XAUTHORITY_ARGS=(-v "${XAUTHORITY}:/tmp/.docker.xauth:ro" -e XAUTHORITY=/tmp/.docker.xauth)
-fi
+resolve_host_display() {
+    HOST_DISPLAY="${OCD_DISPLAY:-${DISPLAY:-}}"
+    if [ "$(uname -s)" = "Darwin" ] && [ -z "${OCD_DISPLAY:-}" ]; then
+        case "${HOST_DISPLAY}" in
+            ""|:*)
+                HOST_DISPLAY="host.docker.internal:0"
+                ;;
+            /tmp/*|/private/tmp/*|/var/run/com.apple.launchd.*)
+                HOST_DISPLAY="host.docker.internal:0"
+                ;;
+        esac
+    fi
+}
 
-HOST_DISPLAY="${OCD_DISPLAY:-${DISPLAY:-}}"
-if [ "$(uname -s)" = "Darwin" ] && [ -z "${OCD_DISPLAY:-}" ]; then
-    case "${HOST_DISPLAY}" in
-        ""|:*)
-            HOST_DISPLAY="host.docker.internal:0"
-            ;;
-        /tmp/*|/private/tmp/*|/var/run/com.apple.launchd.*)
-            HOST_DISPLAY="host.docker.internal:0"
-            ;;
-    esac
-fi
+prepare_agents_mount() {
+    AGENTS_MOUNT=()
+    if [ -d "${SCRIPT_DIR}/config/agents" ]; then
+        AGENTS_MOUNT=(-v "${SCRIPT_DIR}/config/agents:/config/agents:ro")
+    fi
+}
 
-# Custom OpenCode agents: Markdown files in config/agents are loaded via OPENCODE_CONFIG_DIR.
-AGENTS_MOUNT=()
-if [ -d "${SCRIPT_DIR}/config/agents" ]; then
-    AGENTS_MOUNT=(-v "${SCRIPT_DIR}/config/agents:/config/agents:ro")
-fi
-
-# Configure command (network is always --network host for Ollama compatibility)
 port_in_use() {
     docker ps --format '{{.Ports}}' | grep -q ":$1->" || (: <>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
 }
 
-if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
-    echo "Error: --tmux cannot be combined with --web."
-    exit 1
-elif [ "$WEB_MODE" = true ]; then
-    while port_in_use "${WEB_PORT}"; do
-        echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
-        WEB_PORT=$((WEB_PORT + 1))
-    done
+build_opencode_cmd() {
+    if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
+        echo "Error: --tmux cannot be combined with --web."
+        exit 1
+    elif [ "$WEB_MODE" = true ]; then
+        while port_in_use "${WEB_PORT}"; do
+            echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
+            WEB_PORT=$((WEB_PORT + 1))
+        done
 
-    OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
+        OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
 
-    if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
-        echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
-        echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --web"
+        if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
+            echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
+            echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --web"
+        fi
+    elif [ "$TMUX_MODE" = true ]; then
+        printf -v TMUX_SHELL_COMMAND 'opencode --port %q %q' "${WEB_PORT}" "${CONTAINER_WORKSPACE}"
+        for arg in "$@"; do
+            printf -v QUOTED_ARG '%q' "$arg"
+            TMUX_SHELL_COMMAND+=" ${QUOTED_ARG}"
+        done
+        OPENCODE_CMD=(tmux new-session -s opencode "export TMUX_PANE=\$(tmux display-message -p '#{pane_id}'); exec ${TMUX_SHELL_COMMAND}")
+    else
+        OPENCODE_CMD=(opencode "${CONTAINER_WORKSPACE}" "$@")
     fi
-elif [ "$TMUX_MODE" = true ]; then
-    printf -v TMUX_SHELL_COMMAND 'opencode --port %q %q' "${WEB_PORT}" "${CONTAINER_WORKSPACE}"
-    for arg in "$@"; do
-        printf -v QUOTED_ARG '%q' "$arg"
-        TMUX_SHELL_COMMAND+=" ${QUOTED_ARG}"
-    done
-    OPENCODE_CMD=(tmux new-session -s opencode "export TMUX_PANE=\$(tmux display-message -p '#{pane_id}'); exec ${TMUX_SHELL_COMMAND}")
-else
-    OPENCODE_CMD=(opencode "${CONTAINER_WORKSPACE}" "$@")
-fi
+}
 
-SERVER_ENV=()
-if [ -n "${OPENCODE_SERVER_PASSWORD:-}" ]; then
-    SERVER_ENV+=(-e OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD}")
-fi
-if [ -n "${OPENCODE_SERVER_USERNAME:-}" ]; then
-    SERVER_ENV+=(-e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME}")
-fi
+build_server_env() {
+    SERVER_ENV=()
+    if [ -n "${OPENCODE_SERVER_PASSWORD:-}" ]; then
+        SERVER_ENV+=(-e OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD}")
+    fi
+    if [ -n "${OPENCODE_SERVER_USERNAME:-}" ]; then
+        SERVER_ENV+=(-e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME}")
+    fi
+}
 
 restore_terminal() {
     if [ -t 1 ]; then
-        # Reset terminal modes commonly left enabled by TUIs after abrupt exits.
         printf '\033[?1000l\033[?1002l\033[?1003l\033[?1004l\033[?1005l\033[?1006l\033[?1015l\033[?2004l\033[<u\033[>4;0m\033[?25h\033[0m'
     fi
 }
 
-if [ -t 1 ]; then
-    trap restore_terminal EXIT INT TERM HUP
-fi
+build_rm_args() {
+    RM_ARGS=(--rm)
+    if [ "$DEBUG_MODE" = true ]; then
+        RM_ARGS=()
+    fi
+}
 
-# Run the container
-RM_ARGS=(--rm)
-if [ "$DEBUG_MODE" = true ]; then
-    RM_ARGS=()
-fi
+print_start_banner() {
+    if [ "$WEB_MODE" = true ]; then
+        echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
+    elif [ "$TMUX_MODE" = true ]; then
+        echo "Starting tmux-backed container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
+    else
+        echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
+    fi
+}
 
-if [ "$WEB_MODE" = true ]; then
-    echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
-elif [ "$TMUX_MODE" = true ]; then
-    echo "Starting tmux-backed container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
-else
-    echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
-fi
-set +e
-docker run -it \
-    "${RM_ARGS[@]}" \
-    --init \
-    --entrypoint "" \
-    --name "${CONTAINER_NAME}" \
-    --network host \
-    --shm-size=1g \
-    -v "${SCRIPT_DIR}/data:/home/coder:rw" \
-    -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
-    -v "${OPENCODE_QUOTA_CONFIG_HOST}:/config/opencode-quota/quota-toast.json:ro" \
-    -v "${PLAYWRIGHT_MCP_CONFIG_HOST}:/config/playwright-mcp.json:ro" \
-    -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
-    -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
-    -v "${TMUX_CONFIG_HOST}:/home/coder/.tmux.conf:ro" \
-    "${AGENTS_MOUNT[@]}" \
-    -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
-    "${X11_MOUNT[@]}" \
-    "${XAUTHORITY_ARGS[@]}" \
-    -w "${CONTAINER_WORKSPACE}" \
-    -e HOME=/home/coder \
-    -e PATH="/home/coder/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin" \
-    -e DISPLAY="${HOST_DISPLAY}" \
-    -e TERM=xterm-256color \
-    -e LANG=C.UTF-8 \
-    -e LC_ALL=C.UTF-8 \
-    -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
-    -e OPENCODE_CONFIG=/config/opencode.json \
-    -e OPENCODE_CONFIG_DIR=/config \
-    -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \
-    "${SERVER_ENV[@]}" \
-    --security-opt no-new-privileges:true \
-    --cap-drop ALL \
-    --cap-add CHOWN \
-    --cap-add SETUID \
-    --cap-add SETGID \
-    "${IMAGE_NAME}" \
-    "${OPENCODE_CMD[@]}"
-DOCKER_STATUS=$?
-if [ "$DEBUG_MODE" = true ]; then
-    echo "Docker exited with status ${DOCKER_STATUS}."
-    echo "Debug container '${CONTAINER_NAME}' was preserved."
-    echo "Inspect it with: docker logs ${CONTAINER_NAME}"
-    echo "Inspect exit state with: docker inspect ${CONTAINER_NAME}"
-    echo "Remove it with: docker rm ${CONTAINER_NAME}"
-fi
-exit "$DOCKER_STATUS"
+run_container() {
+    set +e
+    docker run -it \
+        "${RM_ARGS[@]}" \
+        --init \
+        --entrypoint "" \
+        --name "${CONTAINER_NAME}" \
+        --network host \
+        --shm-size=1g \
+        -v "${SCRIPT_DIR}/data:/home/coder:rw" \
+        -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
+        -v "${OPENCODE_QUOTA_CONFIG_HOST}:/config/opencode-quota/quota-toast.json:ro" \
+        -v "${PLAYWRIGHT_MCP_CONFIG_HOST}:/config/playwright-mcp.json:ro" \
+        -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
+        -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
+        -v "${TMUX_CONFIG_HOST}:/home/coder/.tmux.conf:ro" \
+        "${AGENTS_MOUNT[@]}" \
+        -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
+        "${X11_MOUNT[@]}" \
+        "${XAUTHORITY_ARGS[@]}" \
+        -w "${CONTAINER_WORKSPACE}" \
+        -e HOME=/home/coder \
+        -e PATH="/home/coder/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin" \
+        -e DISPLAY="${HOST_DISPLAY}" \
+        -e TERM=xterm-256color \
+        -e LANG=C.UTF-8 \
+        -e LC_ALL=C.UTF-8 \
+        -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
+        -e OPENCODE_CONFIG=/config/opencode.json \
+        -e OPENCODE_CONFIG_DIR=/config \
+        -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \
+        "${SERVER_ENV[@]}" \
+        --security-opt no-new-privileges:true \
+        --cap-drop ALL \
+        --cap-add CHOWN \
+        --cap-add SETUID \
+        --cap-add SETGID \
+        "${IMAGE_NAME}" \
+        "${OPENCODE_CMD[@]}"
+    DOCKER_STATUS=$?
+}
+
+print_debug_instructions() {
+    if [ "$DEBUG_MODE" = true ]; then
+        echo "Docker exited with status ${DOCKER_STATUS}."
+        echo "Debug container '${CONTAINER_NAME}' was preserved."
+        echo "Inspect it with: docker logs ${CONTAINER_NAME}"
+        echo "Inspect exit state with: docker inspect ${CONTAINER_NAME}"
+        echo "Remove it with: docker rm ${CONTAINER_NAME}"
+    fi
+}
+
+main() {
+    resolve_script_dir
+    CURRENT_DIR="$(pwd -P)"
+    sanitize_workspace_basename
+    hash_workspace_path
+    CONTAINER_WORKSPACE="/workspaces/${WORKSPACE_BASENAME}-${CURRENT_DIR_HASH}"
+
+    parse_args "$@"
+
+    IMAGE_NAME="ocd:latest"
+    CONTAINER_NAME="ocd-$(date +%Y%m%d-%H%M%S)-$$"
+
+    if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
+        echo "Error: Image '${IMAGE_NAME}' not found."
+        echo "Please run ./build first to build the image."
+        exit 1
+    fi
+
+    # Config: merge local overrides on top of base config if they exist.
+    # Objects are merged recursively; arrays are appended with duplicate entries skipped.
+    JQ_MERGE_FILTER='def merge_arrays($a; $b): reduce $b[] as $item ($a; if index($item) == null then . + [$item] else . end); def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) elif (($a[$key] | type) == "array" and ($b[$key] | type) == "array") then merge_arrays($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
+    OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
+    OPENCODE_QUOTA_CONFIG_HOST="${SCRIPT_DIR}/config/opencode-quota/quota-toast.json"
+    PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
+    TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
+    TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
+    merge_opencode_config
+
+    # oh-my-openagent config: select base config based on --profile flag.
+    # Available profiles are files named oh-my-openagent.<profile>.json in config/.
+    # Default (no --profile) uses oh-my-openagent.json.
+    # NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
+    select_omo_base_config
+    merge_omo_config
+
+    ensure_opencode_project_id
+    setup_macos_xquartz
+    prepare_x11_mounts
+    resolve_host_display
+    prepare_agents_mount
+
+    build_opencode_cmd "${DOCKER_ARGS[@]}"
+    build_server_env
+
+    if [ -t 1 ]; then
+        trap restore_terminal EXIT INT TERM HUP
+    fi
+
+    build_rm_args
+    print_start_banner
+    run_container
+    print_debug_instructions
+    exit "${DOCKER_STATUS}"
+}
+
+main "$@"
