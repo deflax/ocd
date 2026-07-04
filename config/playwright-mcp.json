@@ -1,0 +1,16 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "isolated": true,
+    "launchOptions": {
+      "channel": "chrome",
+      "headless": false,
+      "args": [
+        "--no-sandbox",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-features=CDPScreenshotNewSurface"
+      ]
+    }
+  }
+}

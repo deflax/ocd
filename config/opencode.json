@@ -49,5 +49,19 @@
   "plugin": [
     "oh-my-openagent@4.15.1",
     "@slkiser/opencode-quota@3.10.1"
-  ]
+  ],
+  "mcp": {
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest",
+        "--isolated",
+        "--config",
+        "/config/playwright-mcp.json"
+      ],
+      "enabled": true
+    }
+  }
 }
