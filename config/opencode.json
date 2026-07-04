@@ -59,9 +59,7 @@
         "PLAYWRIGHT_MCP_BROWSER",
         "-u",
         "PLAYWRIGHT_MCP_EXECUTABLE_PATH",
-        "npx",
-        "-y",
-        "@playwright/mcp@latest",
+        "playwright-mcp",
         "--isolated",
         "--config",
         "/config/playwright-mcp.json"

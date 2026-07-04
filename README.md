@@ -8,7 +8,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Mounts your current working directory at a stable unique path under `/workspaces/...`
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
-- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, Playwright Chromium browser runtime, Node.js language servers, and more
+- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, Playwright MCP with its matching Chromium browser runtime, Node.js language servers, and more
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
 - Web UI mode for browser-based access
@@ -63,7 +63,7 @@ If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) w
 
 The container uses `--shm-size=1g` because headed Chromium can hang or render blank surfaces with Docker's small default shared-memory mount. Playwright MCP also runs Chromium with software-only rendering flags so the browser remains observable on the host without passing GPU devices into the container or switching Playwright MCP to headless mode by default.
 
-The image installs Playwright's bundled Chromium on all supported architectures, including Apple Silicon Docker Desktop.
+The image installs `@playwright/mcp` globally and uses that same package to install Playwright's bundled Chromium on all supported architectures, including Apple Silicon Docker Desktop. Keeping the MCP package and browser install source the same avoids browser revision mismatches when `@playwright/mcp@latest` moves ahead of the separately published `playwright` package.
 
 The launcher uses Docker's `--init` shim so orphaned Chrome and crashpad helper processes are reaped when browser sessions exit. This prevents headed browser retries from accumulating zombie processes under the container's PID 1.
 
@@ -71,7 +71,7 @@ Headed Chrome support expects Linux X11, XWayland, or macOS XQuartz. On hosts wi
 
 On macOS, Docker Desktop cannot use XQuartz's local Unix socket path directly. When `ocd` runs on Darwin and `OCD_DISPLAY` is not set, it rewrites an empty, local, or `:0`-style `DISPLAY` to `host.docker.internal:0` for the container. Start XQuartz, enable network clients if needed, allow local clients with `xhost`, then run `./ocd`. Override the value explicitly with `OCD_DISPLAY=... ./ocd` if your XQuartz setup uses a different display endpoint.
 
-The base OpenCode config starts Playwright MCP with `/config/playwright-mcp.json` plus `--isolated`. The MCP command also unsets `PLAYWRIGHT_MCP_BROWSER` and `PLAYWRIGHT_MCP_EXECUTABLE_PATH` before startup so an inherited host or shell override cannot force the Chrome channel instead of Playwright's bundled Chromium. The config keeps Chromium headed, uses isolated in-memory browser profiles to avoid stale profile locks, suppresses Chromium's unsupported-flag warning with `--test-type`, forces a software-only rendering path with `--disable-gpu --disable-software-rasterizer`, and disables Chromium's `CDPScreenshotNewSurface` feature. Those rendering flags avoid hangs in screenshots or click-stability checks on some container/X11 compositor combinations. Playwright still injects `--no-sandbox` by default because the wrapper runs Docker with `no-new-privileges`, which prevents Chromium's setuid sandbox from initializing. Restart `./ocd` after changing this MCP config; running OpenCode sessions keep the already-started MCP server.
+The base OpenCode config starts the globally installed `playwright-mcp` binary with `/config/playwright-mcp.json` plus `--isolated`, rather than resolving a fresh package through `npx` at runtime. The MCP command also unsets `PLAYWRIGHT_MCP_BROWSER` and `PLAYWRIGHT_MCP_EXECUTABLE_PATH` before startup so an inherited host or shell override cannot force the Chrome channel instead of Playwright's bundled Chromium. The config keeps Chromium headed, uses isolated in-memory browser profiles to avoid stale profile locks, suppresses Chromium's unsupported-flag warning with `--test-type`, forces a software-only rendering path with `--disable-gpu --disable-software-rasterizer`, and disables Chromium's `CDPScreenshotNewSurface` feature. Those rendering flags avoid hangs in screenshots or click-stability checks on some container/X11 compositor combinations. Playwright still injects `--no-sandbox` by default because the wrapper runs Docker with `no-new-privileges`, which prevents Chromium's setuid sandbox from initializing. Rebuild with `./build` after changing the Dockerfile or Playwright MCP package version, and restart `./ocd` after changing this MCP config; running OpenCode sessions keep the already-started MCP server.
 
 ### oh-my-openagent
 
