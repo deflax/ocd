@@ -38,6 +38,7 @@ Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still
 | `config/opencode.json` | Base config |
 | `config/opencode.local.json` | Local overrides (gitignored) |
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
+| `config/playwright-mcp.json` | Playwright MCP browser launch config mounted into `/config` |
 | `config/oh-my-openagent.*.json` | Model profiles (see below) |
 | `config/tui.json` | TUI theme/config mounted into the container |
 | `config/tmux.conf` | Internal tmux config mounted as `/home/coder/.tmux.conf` |
@@ -60,9 +61,11 @@ The base `config/opencode.json` also carries shell permissions. Current defaults
 
 If `/tmp/.X11-unix` exists on the host, it's automatically mounted (read-only) with `DISPLAY` for clipboard sharing and headed browser windows. If `XAUTHORITY` points to an existing host file, the launcher also mounts it read-only so Chrome launched by Playwright can authenticate to the X server.
 
-The container uses `--shm-size=1g` because headed Chrome can hang or render blank surfaces with Docker's small default shared-memory mount. This keeps the browser observable on the host without switching Playwright MCP to headless mode by default.
+The container uses `--shm-size=1g` because headed Chrome can hang or render blank surfaces with Docker's small default shared-memory mount. Playwright MCP also runs Chrome with software-only rendering flags so the browser remains observable on the host without passing GPU devices into the container or switching Playwright MCP to headless mode by default.
 
 Headed Chrome support expects Linux X11 or XWayland. On hosts with stricter X server access control, you may still need to allow the container user through your normal host policy, for example with `xhost` or a valid `XAUTHORITY` file. Wayland-only and macOS hosts do not expose `/tmp/.X11-unix` in the same way, so headed browser windows may need a different display bridge.
+
+The base OpenCode config starts Playwright MCP with `/config/playwright-mcp.json` plus `--isolated`. The config keeps Chrome headed, uses isolated in-memory browser profiles to avoid stale profile locks, disables Chrome's sandbox with `--no-sandbox`, forces a software-only rendering path with `--disable-gpu --disable-software-rasterizer`, and disables Chrome's `CDPScreenshotNewSurface` feature. Those rendering flags avoid hangs in screenshots or click-stability checks on some container/X11 compositor combinations. `--no-sandbox` is required because the wrapper runs Docker with `no-new-privileges`, which prevents Chrome's setuid sandbox from initializing. Restart `./ocd` after changing this MCP config; running OpenCode sessions keep the already-started MCP server.
 
 ### oh-my-openagent
 
