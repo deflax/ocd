@@ -315,6 +315,7 @@ docker run -it \
     -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
     -e OPENCODE_CONFIG=/config/opencode.json \
     -e OPENCODE_CONFIG_DIR=/config \
+    -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \
     "${SERVER_ENV[@]}" \
     --security-opt no-new-privileges:true \
     --cap-drop ALL \

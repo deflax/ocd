@@ -7,6 +7,7 @@
       "chromiumSandbox": false,
       "args": [
         "--test-type",
+        "--disable-infobars",
         "--disable-gpu",
         "--disable-software-rasterizer",
         "--disable-features=CDPScreenshotNewSurface"
