@@ -100,7 +100,7 @@ RUN npm install -g --prefix /usr/local \
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-RUN playwright install --with-deps chrome \
+RUN playwright install --with-deps chromium \
     && chmod -R a+rX /ms-playwright
 
 
