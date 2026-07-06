@@ -239,13 +239,6 @@ resolve_host_display() {
     fi
 }
 
-prepare_agents_mount() {
-    AGENTS_MOUNT=()
-    if [ -d "${SCRIPT_DIR}/config/agents" ]; then
-        AGENTS_MOUNT=(-v "${SCRIPT_DIR}/config/agents:/config/agents:ro")
-    fi
-}
-
 port_in_use() {
     docker ps --format '{{.Ports}}' | grep -q ":$1->" || (: <>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
 }
@@ -314,12 +307,6 @@ shell_join() {
 }
 
 print_optional_mount_status() {
-    if [ "${#AGENTS_MOUNT[@]}" -gt 0 ]; then
-        echo "  Agents directory: ${SCRIPT_DIR}/config/agents -> /config/agents"
-    else
-        echo "  Agents directory: not mounted (config/agents not found)"
-    fi
-
     if [ "${#X11_MOUNT[@]}" -gt 0 ]; then
         echo "  X11 socket: /tmp/.X11-unix -> /tmp/.X11-unix"
     else
@@ -370,6 +357,7 @@ print_start_banner() {
     echo "  oh-my-openagent config: ${OMO_CONFIG_HOST} -> /config/oh-my-openagent.json"
     echo "  TUI config: ${TUI_CONFIG_HOST} -> /config/tui.json"
     echo "  tmux config: ${TMUX_CONFIG_HOST} -> /home/coder/.tmux.conf"
+    echo "  Agents directory: ${SCRIPT_DIR}/agents -> /config/agents"
     echo "  Display: ${HOST_DISPLAY:-<unset>}"
     print_optional_mount_status
     echo "  Network: host"
@@ -394,7 +382,7 @@ run_container() {
         -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
         -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
         -v "${TMUX_CONFIG_HOST}:/home/coder/.tmux.conf:ro" \
-        "${AGENTS_MOUNT[@]}" \
+        -v "${SCRIPT_DIR}/agents:/config/agents:ro" \
         -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
         "${X11_MOUNT[@]}" \
         "${XAUTHORITY_ARGS[@]}" \
@@ -469,7 +457,6 @@ main() {
     setup_macos_xquartz
     prepare_x11_mounts
     resolve_host_display
-    prepare_agents_mount
 
     build_opencode_cmd "${DOCKER_ARGS[@]}"
     build_server_env
