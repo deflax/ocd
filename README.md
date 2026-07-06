@@ -34,13 +34,24 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 
 1. **Build the image:** `./build`
 2. **Run the container:** `./ocd`
-3. **Or start with internal tmux:** `./ocd --tmux` → opens OpenCode inside a container tmux session
-4. **Or start in web mode:** `./ocd --web` → opens web UI at http://localhost:4096
+3. **Or start with internal tmux:** `./ocd --ocd-tmux` → opens OpenCode inside a container tmux session
+4. **Or start in web mode:** `./ocd --ocd-web` → opens web UI at http://localhost:4096
 
 **Optional:** Symlink to run from anywhere:
 ```bash
 ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 ```
+
+## OCD Options
+
+Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass through without collisions. Run `./ocd --ocd-help` to list the wrapper options. Any unrecognized argument is forwarded to OpenCode; use `--` to forward the remaining arguments literally:
+
+```bash
+./ocd -- --help
+./ocd --ocd-profile minimax -- --version
+```
+
+Available wrapper options are `--ocd-web`, `--ocd-tmux`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.
 
 ## Cache Cleanup
 
@@ -96,16 +107,16 @@ Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Libr
 
 The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode and top-level `tmux.enabled` integration are enabled in the committed model profiles. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 
-Use `./ocd --tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. Extra OpenCode arguments are forwarded after the workspace path, and `--profile` still selects the mounted oh-my-openagent profile:
+Use `./ocd --ocd-tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. Extra OpenCode arguments are forwarded after the workspace path, and `--ocd-profile` selects the mounted oh-my-openagent profile:
 
 ```bash
-./ocd --tmux
-./ocd --tmux --profile minimax
+./ocd --ocd-tmux
+./ocd --ocd-tmux --ocd-profile minimax
 ```
 
-This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --tmux` from a host tmux pane while oh-my-openagent uses its own separate tmux server inside Docker. `--tmux` is for the terminal TUI and cannot be combined with `--web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
+This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --ocd-tmux` from a host tmux pane while oh-my-openagent uses its own separate tmux server inside Docker. `--ocd-tmux` is for the terminal TUI and cannot be combined with `--ocd-web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
 
-When `--tmux` is used, the launcher starts OpenCode with `--port` because oh-my-openagent tmux pane spawning requires an OpenCode server port. The port defaults to `4096` and can be changed with `--port`, the same flag used by web mode.
+When `--ocd-tmux` is used, the launcher starts OpenCode with `--port` because oh-my-openagent tmux pane spawning requires an OpenCode server port. The port defaults to `4096` and can be changed with `--ocd-port`, the same wrapper flag used by web mode.
 
 The launcher pins the container's outer `TERM` to `xterm-256color`; tmux then sets its own terminal type inside the session. This avoids broken rendering when the host uses a terminal name that is not available in Debian terminfo.
 
@@ -136,12 +147,12 @@ This wrapper includes `hallucinator`, a high-temperature primary agent for specu
 
 ### Model Profiles
 
-Switch models via `--profile` flag:
+Switch models via the wrapper `--ocd-profile` flag:
 
 ```bash
 ./ocd                        # Use default OpenAI models
-./ocd --profile minimax      # Use MiniMax models
-./ocd --profile ollama       # Use local Ollama models only
+./ocd --ocd-profile minimax  # Use MiniMax models
+./ocd --ocd-profile ollama   # Use local Ollama models only
 ```
 
 **Available profiles:**
@@ -161,16 +172,16 @@ To create a new profile, copy `config/oh-my-openagent.json` to `config/oh-my-ope
 Start OpenCode with a browser-based UI instead of the terminal TUI:
 
 ```bash
-./ocd --web                          # Web UI on http://localhost:4096
-./ocd --web --port 8080              # Custom port
-./ocd --web --profile minimax        # Combine with model profiles
+./ocd --ocd-web                              # Web UI on http://localhost:4096
+./ocd --ocd-web --ocd-port 8080              # Custom port
+./ocd --ocd-web --ocd-profile minimax        # Combine with model profiles
 ```
 
-Web mode cannot be combined with `--tmux`; tmux mode is only for the terminal TUI. Web mode starts with the requested port and automatically increments to the next available port if it is already in use.
+Web mode cannot be combined with `--ocd-tmux`; tmux mode is only for the terminal TUI. Web mode starts with the requested port and automatically increments to the next available port if it is already in use.
 
 **Authentication (optional):** Set `OPENCODE_SERVER_PASSWORD` to require basic auth:
 ```bash
-OPENCODE_SERVER_PASSWORD=secret ./ocd --web
+OPENCODE_SERVER_PASSWORD=secret ./ocd --ocd-web
 ```
 Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVER_USERNAME` is set.
 
@@ -178,17 +189,17 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OCD_WEB_PORT` | Default web port (overridden by `--port`) | `4096` |
+| `OCD_WEB_PORT` | Default web port (overridden by `--ocd-port`) | `4096` |
 | `OCD_NO_BANNER` | Suppress the interactive startup banner when set | (unset) |
 | `OPENCODE_SERVER_PASSWORD` | Basic auth password | (none — unauthenticated) |
 | `OPENCODE_SERVER_USERNAME` | Basic auth username | `opencode` |
 
 ### Debugging Container Exits
 
-Use `./ocd --debug` when OpenCode exits unexpectedly. Debug mode keeps the generated container instead of removing it and prints commands for collecting evidence:
+Use `./ocd --ocd-debug` when OpenCode exits unexpectedly. Debug mode keeps the generated container instead of removing it and prints commands for collecting evidence:
 
 ```bash
-./ocd --debug
+./ocd --ocd-debug
 # The launcher prints the generated container name:
 docker logs <container-name>
 docker inspect <container-name>

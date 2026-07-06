@@ -34,6 +34,32 @@ hash_workspace_path() {
     fi
 }
 
+usage() {
+    cat <<'EOF'
+Usage: ocd [ocd options] [opencode args]
+
+Run OpenCode inside the OCD Docker wrapper.
+
+OCD wrapper options:
+  --ocd-help             Show this help and exit
+  --ocd-profile <name>   Select an oh-my-openagent profile (for example: minimax, ollama)
+  --ocd-web              Start OpenCode web mode instead of the terminal TUI
+  --ocd-tmux             Start OpenCode in an internal container tmux session
+  --ocd-port <port>      Set the OpenCode server/web port used by --ocd-web or --ocd-tmux
+  --ocd-debug            Preserve the Docker container after exit and print debug commands
+
+Any argument not listed above is forwarded to OpenCode. Use -- to stop OCD option
+parsing and forward the remaining arguments literally.
+
+Examples:
+  ./ocd
+  ./ocd --ocd-web
+  ./ocd --ocd-web --ocd-port 8080
+  ./ocd --ocd-tmux --ocd-profile minimax
+  ./ocd -- --help
+EOF
+}
+
 parse_args() {
     OMO_PROFILE=""
     WEB_MODE=false
@@ -44,35 +70,44 @@ parse_args() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --profile)
+            --ocd-help)
+                usage
+                exit 0
+                ;;
+            --ocd-profile)
                 if [[ -n "${2:-}" ]]; then
                     OMO_PROFILE="$2"
                     shift 2
                 else
-                    echo "Error: --profile requires a value (e.g., --profile minimax)"
+                    echo "Error: --ocd-profile requires a value (e.g., --ocd-profile minimax)"
                     exit 1
                 fi
                 ;;
-            --web)
+            --ocd-web)
                 WEB_MODE=true
                 shift
                 ;;
-            --tmux)
+            --ocd-tmux)
                 TMUX_MODE=true
                 shift
                 ;;
-            --debug)
+            --ocd-debug)
                 DEBUG_MODE=true
                 shift
                 ;;
-            --port)
+            --ocd-port)
                 if [[ -n "${2:-}" ]]; then
                     WEB_PORT="$2"
                     shift 2
                 else
-                    echo "Error: --port requires a value (e.g., --port 4096)"
+                    echo "Error: --ocd-port requires a value (e.g., --ocd-port 4096)"
                     exit 1
                 fi
+                ;;
+            --)
+                shift
+                DOCKER_ARGS+=("$@")
+                break
                 ;;
             *)
                 DOCKER_ARGS+=("$1")
@@ -218,7 +253,7 @@ port_in_use() {
 
 build_opencode_cmd() {
     if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
-        echo "Error: --tmux cannot be combined with --web."
+        echo "Error: --ocd-tmux cannot be combined with --ocd-web."
         exit 1
     elif [ "$WEB_MODE" = true ]; then
         while port_in_use "${WEB_PORT}"; do
@@ -230,7 +265,7 @@ build_opencode_cmd() {
 
         if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
             echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
-            echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --web"
+            echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --ocd-web"
         fi
     elif [ "$TMUX_MODE" = true ]; then
         printf -v TMUX_SHELL_COMMAND 'opencode --port %q %q' "${WEB_PORT}" "${CONTAINER_WORKSPACE}"
@@ -324,14 +359,6 @@ EOF
 }
 
 print_start_banner() {
-    if [ "$WEB_MODE" = true ]; then
-        echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
-    elif [ "$TMUX_MODE" = true ]; then
-        echo "Starting tmux-backed container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
-    else
-        echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
-    fi
-
     echo "Launch details:"
     echo "  Mode: $([ "$WEB_MODE" = true ] && echo web || { [ "$TMUX_MODE" = true ] && echo tmux || echo terminal; })"
     echo "  Profile: ${OMO_PROFILE:-default}"
@@ -347,7 +374,7 @@ print_start_banner() {
     echo "  Display: ${HOST_DISPLAY:-<unset>}"
     print_optional_mount_status
     echo "  Network: host"
-    echo "  Cleanup: $([ "$DEBUG_MODE" = true ] && echo 'preserve container (--debug)' || echo 'remove container on exit')"
+    echo "  Cleanup: $([ "$DEBUG_MODE" = true ] && echo 'preserve container (--ocd-debug)' || echo 'remove container on exit')"
     echo "  Forwarded OpenCode args: $([ "${#DOCKER_ARGS[@]}" -gt 0 ] && shell_join "${DOCKER_ARGS[@]}" || echo '<none>')"
     echo "  Container command: $(shell_join "${OPENCODE_CMD[@]}")"
 }
@@ -432,9 +459,9 @@ main() {
     TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
     merge_opencode_config
 
-    # oh-my-openagent config: select base config based on --profile flag.
+    # oh-my-openagent config: select base config based on --ocd-profile flag.
     # Available profiles are files named oh-my-openagent.<profile>.json in config/.
-    # Default (no --profile) uses oh-my-openagent.json.
+    # Default (no --ocd-profile) uses oh-my-openagent.json.
     # NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
     select_omo_base_config
     merge_omo_config
