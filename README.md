@@ -70,7 +70,7 @@ Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still
 | `config/oh-my-openagent.*.json` | Model profiles (see below) |
 | `config/tui.json` | TUI theme/config mounted into the container |
 | `config/tmux.conf` | Internal tmux config mounted as `/home/coder/.tmux.conf` |
-| `config/agents/*.md` | Wrapper-level custom OpenCode agents |
+| `agents/*.md` | Wrapper-level custom OpenCode agents |
 | `data/` | Persistent home directory |
 
 ### Local Config Overrides
@@ -124,9 +124,9 @@ For team-mode pane visualization, the launcher also exports the active tmux pane
 
 ### Custom Markdown Agents
 
-Define wrapper-level custom OpenCode agents as Markdown files under `config/agents/`. The `ocd` launcher mounts that directory read-only to `/config/agents`, and `OPENCODE_CONFIG_DIR=/config` lets OpenCode load them alongside the JSON config.
+Define wrapper-level custom OpenCode agents as Markdown files under `agents/`. The `ocd` launcher mounts that directory read-only to `/config/agents`, and `OPENCODE_CONFIG_DIR=/config` lets OpenCode load them alongside the JSON config.
 
-Each file name becomes the agent name. For example, `config/agents/reviewer.md` creates an agent named `reviewer`:
+Each file name becomes the agent name. For example, `agents/reviewer.md` creates an agent named `reviewer`:
 
 ```markdown
 ---
@@ -141,7 +141,7 @@ Review the current changes. Focus on correctness, regressions, security issues,
 and missing verification. Report findings first, ordered by severity.
 ```
 
-Use project-level `.opencode/agents/*.md` files in the workspace for agents that should live with one project. Use this repo's `config/agents/*.md` for agents you want available whenever you launch through `ocd`. Avoid naming custom agents the same as built-in agents unless you intentionally want to override them.
+Use project-level `.opencode/agents/*.md` files in the workspace for agents that should live with one project. Use this repo's `agents/*.md` for agents you want available whenever you launch through `ocd`. Avoid naming custom agents the same as built-in agents unless you intentionally want to override them.
 
 This wrapper includes `hallucinator`, a high-temperature primary agent for speculative ideation and playful brainstorming. Use it when you want more creative, less grounded output; switch back to a grounded agent before relying on factual claims or implementation details.
 
@@ -225,8 +225,8 @@ Remove the preserved debug container with the printed `docker rm` command when y
 │   ├── oh-my-openagent.ollama.json    # oh-my-openagent Ollama-only profile (committed)
 │   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
 │   ├── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
-│   ├── tmux.conf                   # Internal tmux config mounted to /home/coder/.tmux.conf
-│   └── agents/                     # Markdown custom agents mounted to /config/agents
+│   └── tmux.conf                   # Internal tmux config mounted to /home/coder/.tmux.conf
+├── agents/         # Markdown custom agents mounted to /config/agents
 ├── data/           # Persistent home (mounted to /home/coder)
 └── Dockerfile      # Container definition
 ```
@@ -241,7 +241,7 @@ The `ocd` script:
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and passes that path to `opencode` so new TUI sessions scope to the mounted workspace
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
-- Mounts `config/agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
+- Mounts `agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
 - Mounts `config/tmux.conf` to `/home/coder/.tmux.conf` for container-internal tmux sessions
 - Clears the image `opencode` entrypoint at launch, then explicitly runs either `opencode`, `opencode web`, or `tmux`
 - Applies security restrictions (dropped capabilities, no-new-privileges)
