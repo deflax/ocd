@@ -207,6 +207,7 @@ Remove the preserved debug container with the printed `docker rm` command when y
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates a unique Docker container name per run so multiple `ocd` containers can run at a time
+- Prints a startup summary with the selected mode/profile, workspace mapping, mounted configs, display/X11 state, forwarded OpenCode args, and container command
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and passes that path to `opencode` so new TUI sessions scope to the mounted workspace
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)

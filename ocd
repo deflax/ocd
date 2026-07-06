@@ -267,6 +267,38 @@ build_rm_args() {
     fi
 }
 
+shell_join() {
+    local ARG
+    local QUOTED_ARG
+    local JOINED
+    JOINED=""
+    for ARG in "$@"; do
+        printf -v QUOTED_ARG '%q' "$ARG"
+        JOINED+=" ${QUOTED_ARG}"
+    done
+    printf '%s' "${JOINED# }"
+}
+
+print_optional_mount_status() {
+    if [ "${#AGENTS_MOUNT[@]}" -gt 0 ]; then
+        echo "  Agents directory: ${SCRIPT_DIR}/config/agents -> /config/agents"
+    else
+        echo "  Agents directory: not mounted (config/agents not found)"
+    fi
+
+    if [ "${#X11_MOUNT[@]}" -gt 0 ]; then
+        echo "  X11 socket: /tmp/.X11-unix -> /tmp/.X11-unix"
+    else
+        echo "  X11 socket: not mounted (/tmp/.X11-unix not found)"
+    fi
+
+    if [ "${#XAUTHORITY_ARGS[@]}" -gt 0 ]; then
+        echo "  Xauthority: ${XAUTHORITY} -> /tmp/.docker.xauth"
+    else
+        echo "  Xauthority: not mounted"
+    fi
+}
+
 print_start_banner() {
     if [ "$WEB_MODE" = true ]; then
         echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
@@ -275,6 +307,25 @@ print_start_banner() {
     else
         echo "Starting container '${CONTAINER_NAME}' using ${CURRENT_DIR} as workspace at '${CONTAINER_WORKSPACE}'."
     fi
+
+    echo "Launch details:"
+    echo "  Mode: $([ "$WEB_MODE" = true ] && echo web || { [ "$TMUX_MODE" = true ] && echo tmux || echo terminal; })"
+    echo "  Profile: ${OMO_PROFILE:-default}"
+    echo "  Image: ${IMAGE_NAME}"
+    echo "  Container: ${CONTAINER_NAME}"
+    echo "  Host workspace: ${CURRENT_DIR}"
+    echo "  Container workspace: ${CONTAINER_WORKSPACE}"
+    echo "  Persistent home: ${SCRIPT_DIR}/data -> /home/coder"
+    echo "  OpenCode config: ${OPENCODE_CONFIG_HOST} -> /config/opencode.json"
+    echo "  oh-my-openagent config: ${OMO_CONFIG_HOST} -> /config/oh-my-openagent.json"
+    echo "  TUI config: ${TUI_CONFIG_HOST} -> /config/tui.json"
+    echo "  tmux config: ${TMUX_CONFIG_HOST} -> /home/coder/.tmux.conf"
+    echo "  Display: ${HOST_DISPLAY:-<unset>}"
+    print_optional_mount_status
+    echo "  Network: host"
+    echo "  Cleanup: $([ "$DEBUG_MODE" = true ] && echo 'preserve container (--debug)' || echo 'remove container on exit')"
+    echo "  Forwarded OpenCode args: $([ "${#DOCKER_ARGS[@]}" -gt 0 ] && shell_join "${DOCKER_ARGS[@]}" || echo '<none>')"
+    echo "  Container command: $(shell_join "${OPENCODE_CMD[@]}")"
 }
 
 run_container() {
