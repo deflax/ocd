@@ -1,5 +1,22 @@
 # Local Isolated Code Runner
 
+```text
+
+                  o
+                 / \
+          o-----o---o-----o
+         /       \ /       \
+        o         o         o
+                  |               88
+                                  88
+                                  88
+ ,adPPYba,----,adPPYba,---,adPPYb,88
+a8"  o  "8a  a8"  o--""  a8"    `Y88
+8b   |   d8  8b---|------8b---o---88
+"8a,-o-,a8"  "8a,-o-,aa  "8a,-|-,d88
+ `"YbbdP"'    `"Ybbd8"'   `"8bbdP"Y8
+```
+
 Run OpenCode inside a Docker container with sandboxed file access and security hardening.
 
 ## Features
@@ -162,6 +179,7 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OCD_WEB_PORT` | Default web port (overridden by `--port`) | `4096` |
+| `OCD_NO_BANNER` | Suppress the interactive startup banner when set | (unset) |
 | `OPENCODE_SERVER_PASSWORD` | Basic auth password | (none — unauthenticated) |
 | `OPENCODE_SERVER_USERNAME` | Basic auth username | `opencode` |
 
@@ -207,6 +225,7 @@ Remove the preserved debug container with the printed `docker rm` command when y
 The `ocd` script:
 - Builds/runs `ocd:latest` Docker image
 - Generates a unique Docker container name per run so multiple `ocd` containers can run at a time
+- Prints an ASCII startup banner for interactive terminals unless `OCD_NO_BANNER` is set
 - Prints a startup summary with the selected mode/profile, workspace mapping, mounted configs, display/X11 state, forwarded OpenCode args, and container command
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and passes that path to `opencode` so new TUI sessions scope to the mounted workspace
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope

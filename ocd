@@ -299,6 +299,29 @@ print_optional_mount_status() {
     fi
 }
 
+print_banner() {
+    if [ ! -t 1 ] || [ -n "${OCD_NO_BANNER:-}" ]; then
+        return 0
+    fi
+
+    cat <<'EOF'
+
+                  o
+                 / \
+          o-----o---o-----o
+         /       \ /       \
+        o         o         o
+                  |               88
+                                  88
+                                  88
+ ,adPPYba,----,adPPYba,---,adPPYb,88
+a8"  o  "8a  a8"  o--""  a8"    `Y88
+8b   |   d8  8b---|------8b---o---88
+"8a,-o-,a8"  "8a,-o-,aa  "8a,-|-,d88
+ `"YbbdP"'    `"Ybbd8"'   `"8bbdP"Y8
+EOF
+}
+
 print_start_banner() {
     if [ "$WEB_MODE" = true ]; then
         echo "Starting web UI on http://localhost:${WEB_PORT} (container '${CONTAINER_NAME}', workspace '${CONTAINER_WORKSPACE}')"
@@ -429,6 +452,7 @@ main() {
     fi
 
     build_rm_args
+    print_banner
     print_start_banner
     run_container
     print_debug_instructions
