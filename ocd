@@ -52,7 +52,6 @@ Any argument not listed above is forwarded to OpenCode. Use -- to stop OCD optio
 parsing and forward the remaining arguments literally.
 
 Examples:
-  ./ocd
   ./ocd --ocd-web
   ./ocd --ocd-web --ocd-port 8080
   ./ocd --ocd-tmux --ocd-profile minimax
