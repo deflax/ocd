@@ -326,20 +326,19 @@ print_banner() {
     fi
 
     cat <<'EOF'
-
-                  o
-                 / \
-          o-----o---o-----o
-         /       \ /       \
-        o         o         o
-                  |               88
-                                  88
-                                  88
- ,adPPYba,----,adPPYba,---,adPPYb,88
-a8"  o  "8a  a8"  o--""  a8"    `Y88
-8b   |   d8  8b---|------8b---o---88
-"8a,-o-,a8"  "8a,-o-,aa  "8a,-|-,d88
- `"YbbdP"'    `"Ybbd8"'   `"8bbdP"Y8
+                    o
+                   / \
+            o-----o---o-----o
+           /       \ /       \
+          o         o         o
+                    |               88
+                                    88
+                                    88
+   ,adPPYba,----,adPPYba,---,adPPYb,88
+  a8"  o  "8a  a8"  o--""  a8"    `Y88
+  8b   |   d8  8b---|------8b---o---88
+  "8a,-o-,a8"  "8a,-o-,aa  "8a,-|-,d88
+   `"YbbdP"'    `"Ybbd8"'   `"8bbdP"Y8
 
 EOF
 }
