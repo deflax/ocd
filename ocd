@@ -444,7 +444,7 @@ main() {
     PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
     TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
     TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
-    CODEX_IDENTITY_PLUGIN="${SCRIPT_DIR}/plugins/opencode-codex-identity-plugin.ts
+    CODEX_IDENTITY_PLUGIN="${SCRIPT_DIR}/plugins/opencode-codex-identity-plugin.ts"
     merge_opencode_config
 
     # oh-my-openagent config: select base config based on --ocd-profile flag.
