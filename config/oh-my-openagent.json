@@ -71,11 +71,6 @@
     }
   },
 
-  "background_task": {
-    "providerConcurrency": { "openai": 20, "opencode": 3 },
-    "modelConcurrency": { "openai/gpt-5.4-mini": 20 }
-  },
-
   "disabled_skills": [],
 
   "disabled_hooks": [
