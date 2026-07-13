@@ -3,77 +3,71 @@
 
   "agents": {
     "sisyphus": {
-      "model": "openai/gpt-5.5",
-      "prompt_append": "You are Sisyphus, a high-agency engineering orchestrator. Think like a senior engineer: curious, pragmatic, warm, and imaginative without being reckless. Your job is to infer the real goal, understand what the user is optimizing for, and choose the most effective path to a good result. Have taste and a point of view. When the obvious approach is clumsy, brittle, or overcomplicated, say so plainly and recommend the better path. Be imaginative in framing, decomposition, and hypothesis generation, but stay grounded in evidence and never invent facts, code behavior, or tool results. Prefer original but simple solutions over generic boilerplate. Handle ambiguity deliberately: if it would materially change the outcome, ask one focused clarifying question using the question tool; otherwise make the best reasonable assumption, state it briefly, and continue. Work outcome-first: identify the objective, constraints, and risks; choose the simplest effective approach; verify important claims with tools, evidence, or tests when available; and stop when the user's actual goal is satisfied. Do not over-engineer. Keep solutions clean, correct, secure, and genuinely useful."
+      "model": "openai/gpt-5.6-sol"
     },
     "atlas": {
-      "model": "openai/gpt-5.5"
+      "model": "openai/gpt-5.6-sol"
     },
     "prometheus": {
-      "model": "openai/gpt-5.5",
-      "reasoningEffort": "high"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "high"
     },
     "metis": {
-      "model": "openai/gpt-5.5"
+      "model": "openai/gpt-5.6-sol"
     },
     "momus": {
-      "model": "openai/gpt-5.5",
-      "reasoningEffort": "high"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "high"
     },
     "oracle": {
-      "model": "openai/gpt-5.5",
-      "prompt_append": "Prioritize correct, evidence-based recommendations over elaborate ones.",
-      "reasoningEffort": "high",
+      "model": "openai/gpt-5.6-sol",
+      "variant": "high",
       "textVerbosity": "medium"
     },
     "hephaestus": {
-      "model": "openai/gpt-5.5"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "medium"
     },
     "librarian": {
-      "model": "openai/gpt-5.4-mini",
-      "prompt_append": "Prefer direct, authoritative references and simple representative examples."
+      "model": "openai/gpt-5.6-luna",
+      "variant": "low"
     },
     "explore": {
-      "model": "openai/gpt-5.4-mini",
-      "prompt_append": "Find the most relevant existing pattern quickly; do not overcomplicate the search.",
-      "temperature": 0.2
+      "model": "openai/gpt-5.6-luna",
+      "variant": "low"
     },
     "multimodal-looker": {
-      "model": "openai/gpt-5.5",
-      "prompt_append": "Interpret only what is supported by the file and keep conclusions simple."
+      "model": "openai/gpt-5.6-sol"
     }
   },
   "categories": {
     "quick": {
-      "model": "openai/gpt-5.4-mini"
+      "model": "openai/gpt-5.6-luna",
+      "variant": "low"
     },
     "deep": {
-      "model": "openai/gpt-5.5",
-      "reasoningEffort": "high"
+      "model": "openai/gpt-5.6-terra",
+      "variant": "xhigh"
     },
     "ultrabrain": {
-      "model": "openai/gpt-5.5",
-      "reasoningEffort": "high"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "xhigh"
     },
     "unspecified-low": {
-      "model": "openai/gpt-5.4-mini"
+      "model": "openai/gpt-5.6-luna",
+      "variant": "xhigh"
     },
     "unspecified-high": {
-      "model": "openai/gpt-5.5"
+      "model": "openai/gpt-5.6-sol"
     },
     "writing": {
-      "model": "openai/gpt-5.5",
-      "prompt_append": "Write clearly, directly, and with the minimum structure needed."
+      "model": "openai/gpt-5.6-sol"
     },
     "visual-engineering": {
-      "model": "openai/gpt-5.5",
-      "prompt_append": "Aim for clear, polished UI with the simplest implementation that achieves it.",
-      "reasoningEffort": "medium"
+      "model": "openai/gpt-5.6-sol"
     },
     "artistry": {
-      "model": "openai/gpt-5.5",
-      "prompt_append": "Be inventive in approach, but keep the final solution simple and usable.",
-      "reasoningEffort": "high"
+      "model": "openai/gpt-5.6-sol"
     }
   },
 

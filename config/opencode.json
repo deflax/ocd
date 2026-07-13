@@ -48,7 +48,8 @@
   },
   "plugin": [
     "oh-my-openagent@4.17.1",
-    "@slkiser/opencode-quota@3.11.2"
+    "@slkiser/opencode-quota@3.11.2",
+    "./opencode-codex-identity-plugin.ts"
   ],
   "mcp": {
     "playwright": {

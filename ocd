@@ -381,6 +381,7 @@ run_container() {
         -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
         -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
         -v "${TMUX_CONFIG_HOST}:/home/coder/.tmux.conf:ro" \
+        -v "${CODEX_IDENTITY_PLUGIN}:/config/opencode-codex-identity-plugin.ts:ro" \
         -v "${SCRIPT_DIR}/agents:/config/agents:ro" \
         -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
         "${X11_MOUNT[@]}" \
@@ -443,6 +444,7 @@ main() {
     PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
     TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
     TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
+    CODEX_IDENTITY_PLUGIN="${SCRIPT_DIR}/plugins/opencode-codex-identity-plugin.ts
     merge_opencode_config
 
     # oh-my-openagent config: select base config based on --ocd-profile flag.
