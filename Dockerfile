@@ -41,6 +41,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     zip \
     ffmpeg \
+    poppler-utils \
+    qpdf \
+    ocrmypdf \
+    tesseract-ocr \
+    tesseract-ocr-eng \
     diffutils \
     fd-find \
     patch \

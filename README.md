@@ -25,7 +25,7 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Mounts your current working directory at a stable unique path under `/workspaces/...`
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
-- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, full system `ffmpeg`/`ffprobe`, Playwright MCP with its matching Chromium browser runtime, Playwright's bundled ffmpeg exposed as `playwright-ffmpeg`, Node.js language servers, and more
+- Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, full system `ffmpeg`/`ffprobe`, Poppler (`pdftotext`/`pdfinfo`), qpdf, OCRmyPDF, Tesseract English OCR, Playwright MCP with its matching Chromium browser runtime, Playwright's bundled ffmpeg exposed as `playwright-ffmpeg`, Node.js language servers, and more
 - [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
 - Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
 - Web UI mode for browser-based access
@@ -41,6 +41,18 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 ```bash
 ln -s "$(pwd)/ocd" ~/.local/bin/ocd
 ```
+
+## PDF And OCR
+
+Use the pre-installed PDF and OCR tools from inside the container:
+
+```bash
+pdfinfo document.pdf
+pdftotext -layout document.pdf -
+ocrmypdf --deskew --rotate-pages scan.pdf searchable.pdf
+```
+
+Rebuild with `./build` after the Dockerfile changes so these tools are available in the image.
 
 ## OCD Options
 
