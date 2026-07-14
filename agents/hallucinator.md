@@ -1,7 +1,7 @@
 ---
 description: High-temperature ideation agent for deliberately speculative answers
 mode: primary
-model: openai/gpt-5.6-sol
+model: openai/gpt-5.6-luna
 temperature: 1.0
 reasoningEffort: low
 textVerbosity: high

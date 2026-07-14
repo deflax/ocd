@@ -3,17 +3,20 @@
 
   "agents": {
     "sisyphus": {
-      "model": "openai/gpt-5.6-sol"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "medium"
     },
     "atlas": {
-      "model": "openai/gpt-5.6-sol"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "medium"
     },
     "prometheus": {
       "model": "openai/gpt-5.6-sol",
-      "variant": "high"
+      "variant": "xhigh"
     },
     "metis": {
-      "model": "openai/gpt-5.6-sol"
+      "model": "openai/gpt-5.6-terra",
+      "variant": "high"
     },
     "momus": {
       "model": "openai/gpt-5.6-sol",
@@ -21,12 +24,12 @@
     },
     "oracle": {
       "model": "openai/gpt-5.6-sol",
-      "variant": "high",
+      "variant": "xhigh",
       "textVerbosity": "medium"
     },
     "hephaestus": {
       "model": "openai/gpt-5.6-sol",
-      "variant": "high"
+      "variant": "xhigh"
     },
     "librarian": {
       "model": "openai/gpt-5.6-luna",
@@ -37,7 +40,8 @@
       "variant": "low"
     },
     "multimodal-looker": {
-      "model": "openai/gpt-5.6-sol"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "medium"
     }
   },
   "categories": {
@@ -46,7 +50,7 @@
       "variant": "low"
     },
     "deep": {
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-5.6-sol",
       "variant": "xhigh"
     },
     "ultrabrain": {
@@ -55,21 +59,23 @@
     },
     "unspecified-low": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "xhigh"
+      "variant": "low"
     },
     "unspecified-high": {
       "model": "openai/gpt-5.6-sol",
-      "variant": "high"
-    },
-    "writing": {
-      "model": "openai/gpt-5.6-luna",
       "variant": "medium"
     },
+    "writing": {
+      "model": "openai/gpt-5.6-terra",
+      "variant": "high"
+    },
     "visual-engineering": {
-      "model": "openai/gpt-5.6-sol"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "medium"
     },
     "artistry": {
-      "model": "openai/gpt-5.6-sol"
+      "model": "openai/gpt-5.6-sol",
+      "variant": "medium"
     }
   },
 
