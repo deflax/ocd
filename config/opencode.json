@@ -4,6 +4,7 @@
   "permission": {
     "external_directory": {
       "*": "ask",
+      "~/.cache/opencode/packages/oh-my-openagent@*/node_modules/oh-my-openagent/dist/skills/**": "allow",
       "/tmp": "allow",
       "/tmp/**": "allow"
     },
