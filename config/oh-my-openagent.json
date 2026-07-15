@@ -33,11 +33,11 @@
     },
     "librarian": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "low"
+      "variant": "medium"
     },
     "explore": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "low"
+      "variant": "medium"
     },
     "multimodal-looker": {
       "model": "openai/gpt-5.6-sol",
@@ -58,8 +58,8 @@
       "variant": "xhigh"
     },
     "unspecified-low": {
-      "model": "openai/gpt-5.6-luna",
-      "variant": "low"
+      "model": "openai/gpt-5.6-terra",
+      "variant": "medium"
     },
     "unspecified-high": {
       "model": "openai/gpt-5.6-sol",
