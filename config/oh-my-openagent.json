@@ -7,7 +7,7 @@
       "variant": "medium"
     },
     "atlas": {
-      "model": "openai/gpt-5.6-sol",
+      "model": "openai/gpt-5.6-terra",
       "variant": "medium"
     },
     "prometheus": {
@@ -40,7 +40,7 @@
       "variant": "medium"
     },
     "multimodal-looker": {
-      "model": "openai/gpt-5.6-sol",
+      "model": "openai/gpt-5.6-terra",
       "variant": "medium"
     }
   },
@@ -62,7 +62,7 @@
       "variant": "medium"
     },
     "unspecified-high": {
-      "model": "openai/gpt-5.6-sol",
+      "model": "openai/gpt-5.6-terra",
       "variant": "medium"
     },
     "writing": {
@@ -70,7 +70,7 @@
       "variant": "high"
     },
     "visual-engineering": {
-      "model": "openai/gpt-5.6-sol",
+      "model": "openai/gpt-5.6-terra",
       "variant": "medium"
     },
     "artistry": {
