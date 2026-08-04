@@ -48,8 +48,8 @@
     "reserved": 10000
   },
   "plugin": [
-    "oh-my-openagent@4.19.1",
-    "@slkiser/opencode-quota@4.0.1"
+    "oh-my-openagent@4.19.4",
+    "@slkiser/opencode-quota@4.5.0"
   ],
   "mcp": {
     "playwright": {
