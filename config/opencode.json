@@ -49,7 +49,7 @@
   },
   "plugin": [
     "oh-my-openagent@4.19.4",
-    "@slkiser/opencode-quota@4.5.0"
+    "@slkiser/opencode-quota@4.8.1"
   ],
   "mcp": {
     "playwright": {
