@@ -96,6 +96,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 
 RUN npm install -g --prefix /usr/local \
     opencode-ai@1.18.18 \
+    oh-my-opencode-slim@2.2.18 \
     @playwright/mcp@latest \
     @ast-grep/cli@latest \
     @biomejs/biome@latest \
@@ -103,6 +104,11 @@ RUN npm install -g --prefix /usr/local \
     intelephense@latest \
     typescript@latest \
     typescript-language-server@latest
+
+RUN mkdir -p /config/skills /config/.oh-my-opencode-slim \
+    && cp -R /usr/local/lib/node_modules/oh-my-opencode-slim/src/skills/. /config/skills/ \
+    && chmod a+rx /config \
+    && chmod -R a+rwX /config/skills /config/.oh-my-opencode-slim
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
