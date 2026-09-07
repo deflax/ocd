@@ -47,6 +47,14 @@
     "prune": true,
     "reserved": 10000
   },
+  "agent": {
+    "plan": {
+      "model": "openai/gpt-5.6-terra"
+    },
+    "build": {
+      "model": "openai/gpt-5.6-terra"
+    }
+  },
   "plugin": [
     "oh-my-opencode-slim@2.2.18",
     "@slkiser/opencode-quota@4.8.1"
