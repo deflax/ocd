@@ -17,14 +17,14 @@ Top-level files are the product surface:
 - `clearcache` — removes selected caches under `data/` without deleting core config/credentials.
 - `Dockerfile` — container definition and preinstalled tools.
 - `README.md` — user-facing architecture and usage guide; keep it aligned with behavior changes.
-- `config/` — committed base configs and model-profile variants.
+- `config/` — committed base configs and Slim model presets.
 - `data/` — persistent runtime home mounted into the container; mostly ignored and treated as state, not source.
 
 ## Key runtime model
 
 `./ocd` is the orchestration center.
 
-- Mounts host current directory to `/workspace`.
+- Mounts the host current directory to a stable path under `/workspaces`.
 - Mounts repo `data/` to `/home/coder`.
 - Mounts merged or base configs read-only into `/config`.
 - Always uses `--network host` for Docker, partly for local Ollama compatibility.
@@ -35,11 +35,8 @@ Top-level files are the product surface:
 - `config/opencode.json`
   - OpenCode schema config.
   - Defines permissions, plugin list, and local Ollama provider (`http://localhost:11434/v1`).
-- `config/oh-my-openagent.json`
-  - Default agent/category routing profile.
-- `config/oh-my-openagent.minimax.json`
-- `config/oh-my-openagent.ollama.json`
-  - Same overall schema as the default profile; mostly model and concurrency differences.
+- `config/oh-my-opencode-slim.json`
+  - Slim harness settings plus the default, MiniMax, and Ollama model presets.
 - `config/tui.json`
   - Small TUI theme config; not part of the merge flow.
 
@@ -48,16 +45,14 @@ Top-level files are the product surface:
 Two local override flows matter:
 
 1. `config/opencode.json` + optional `config/opencode.local.json` → generated `config/opencode.merged.json`
-2. selected `config/oh-my-openagent*.json` + optional `config/oh-my-openagent.local.json` → generated `config/oh-my-openagent.merged.json`
+2. `config/oh-my-opencode-slim.json` + optional `config/oh-my-opencode-slim.local.json` → unique temporary `config/.oh-my-opencode-slim.<container>.json`; the launcher validates and selects its named preset
 
-The merge implementation is `jq -s '.[0] * .[1]'`.
+The launcher uses two recursive `jq` merge contracts:
 
-Critical implication:
+- OpenCode config objects are merged recursively and arrays are appended with duplicate entries skipped.
+- Slim config objects are merged recursively and arrays are replaced, matching Slim's native override behavior.
 
-- objects are merged recursively
-- arrays are replaced wholesale, not appended
-
-If you change config-merging behavior or document local overrides, mention this explicitly.
+If you change either config-merging behavior or document local overrides, mention the distinction explicitly.
 
 ## Shell conventions
 
@@ -79,10 +74,10 @@ Primary workflows:
 ```bash
 ./build
 ./ocd
-./ocd --web
-./ocd --web --port 8080
-./ocd --profile minimax
-./ocd --profile ollama
+./ocd --ocd-web
+./ocd --ocd-web --ocd-port 8080
+./ocd --ocd-profile minimax
+./ocd --ocd-profile ollama
 ./clearcache
 ./clearcache --dry-run
 ```
@@ -96,7 +91,7 @@ When making changes, usually inspect these files together:
 - behavior change in container startup or mounting → `ocd`, `README.md`
 - cache cleanup changes → `clearcache`, `README.md` if user-visible
 - image/tooling changes → `Dockerfile`, `README.md`
-- profile/model routing changes → matching `config/oh-my-openagent*.json`, possibly `README.md`
+- profile/model routing changes → `config/oh-my-opencode-slim.json`, possibly `README.md`
 - permission/plugin/provider changes → `config/opencode.json`, possibly profile docs in `README.md`
 
 ## Repo-specific gotchas
@@ -114,7 +109,7 @@ These are the main upstream systems this repo configures around:
 - OpenCode docs: `https://opencode.ai/docs/config/`
 - OpenCode plugins docs: `https://opencode.ai/docs/plugins/`
 - OpenCode source/docs: `https://github.com/anomalyco/opencode`
-- oh-my-openagent: `https://github.com/code-yeongyu/oh-my-openagent`
+- oh-my-opencode-slim: `https://github.com/alvinunreal/oh-my-opencode-slim`
 - Ollama docs / OpenAI compatibility: `https://docs.ollama.com/`
 
 ## Current repo facts verified during exploration
@@ -128,4 +123,4 @@ These are the main upstream systems this repo configures around:
 - Treat this as an operational infra/tooling repo, not an application repo.
 - Prefer small, surgical edits; most changes should touch one script and possibly one doc/config file.
 - If behavior changes, update `README.md` in the same pass.
-- If adding a new model profile, mirror the existing `oh-my-openagent.<profile>.json` structure rather than inventing a new schema shape.
+- If adding a new model profile, add a named entry under `presets` in `config/oh-my-opencode-slim.json`.

@@ -26,8 +26,8 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Persistent home directory and configuration across sessions
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, full system `ffmpeg`/`ffprobe`, Poppler (`pdftotext`/`pdfinfo`), qpdf, OCRmyPDF, Tesseract English OCR, Playwright MCP with its matching Chromium browser runtime, Playwright's bundled ffmpeg exposed as `playwright-ffmpeg`, Node.js language servers, and more
-- [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) plugin for multi-agent orchestration
-- Internal tmux support for oh-my-openagent team-mode/hyperplan workflows
+- [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) for lean multi-agent orchestration
+- Opt-in internal tmux visualization for Slim background agents
 - Web UI mode for browser-based access
 
 ## Quick Start
@@ -79,7 +79,9 @@ Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still
 | `config/opencode.local.json` | Local overrides (gitignored) |
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
 | `config/playwright-mcp.json` | Playwright MCP Chromium launch config mounted into `/config` |
-| `config/oh-my-openagent.*.json` | Model profiles (see below) |
+| `config/oh-my-opencode-slim.json` | Slim settings and model presets |
+| `config/oh-my-opencode-slim.local.json` | Local Slim overrides (gitignored) |
+| `config/.oh-my-opencode-slim.<container>.json` | Per-launch selected/merged Slim config (gitignored, temporary) |
 | `config/tui.json` | TUI theme/config mounted into the container |
 | `config/tmux.conf` | Internal tmux config mounted as `/home/coder/.tmux.conf` |
 | `agents/*.md` | Wrapper-level custom OpenCode agents |
@@ -94,6 +96,8 @@ Create `config/opencode.local.json` to override settings without committing:
 ```
 
 On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. The merged result is mounted read-only into the container.
+
+Create `config/oh-my-opencode-slim.local.json` to override Slim settings or add machine-specific presets. Slim objects are merged recursively and arrays are replaced, matching Slim's native project-override behavior; this lets a local file clear or replace agent skills, MCPs, and disabled-agent lists. The launcher merges the local file, validates the preset selected by `--ocd-profile`, and writes a unique temporary config for that container. The selected profile and `--ocd-tmux` mode always win over local `preset` and multiplexer values. The temporary file is removed when the launcher exits, so concurrent containers cannot overwrite each other's selection.
 
 The base `config/opencode.json` also carries shell permissions. Current defaults allow bash commands broadly while denying `git push`, `sudo`, and `su` patterns.
 
@@ -113,26 +117,28 @@ On macOS, Docker Desktop cannot use XQuartz's local Unix socket path directly, i
 
 The base OpenCode config starts the globally installed `playwright-mcp` binary with `/config/playwright-mcp.json` plus `--isolated`, rather than resolving a fresh package through `npx` at runtime. The launcher also exports `PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json` so plain child `playwright-mcp` launches inherit the same browser flags. The image creates a stable `/usr/local/bin/playwright-chromium` symlink to Playwright's revisioned Chromium install and exports `PLAYWRIGHT_MCP_EXECUTABLE_PATH` so MCP launches do not fall back to a host Chrome channel path. It also exposes Playwright's bundled ffmpeg as `/usr/local/bin/playwright-ffmpeg`; this remains the small Playwright-pinned media helper, while the normal `ffmpeg` and `ffprobe` commands come from Debian's full system package for general media work. The MCP command still unsets `PLAYWRIGHT_MCP_BROWSER` before startup so an inherited host or shell override cannot force the Chrome channel instead of Playwright's bundled Chromium. The config keeps Chromium headed, uses isolated in-memory browser profiles to avoid stale profile locks, suppresses Chromium's unsupported-flag warning with `--test-type` and `--disable-infobars`, forces a software-only rendering path with `--disable-gpu --disable-software-rasterizer`, and disables Chromium's `CDPScreenshotNewSurface` feature. Those rendering flags avoid hangs in screenshots or click-stability checks on some container/X11 compositor combinations. Playwright still injects `--no-sandbox` by default because the wrapper runs Docker with `no-new-privileges`, which prevents Chromium's setuid sandbox from initializing. Rebuild with `./build` after changing the Dockerfile or Playwright MCP package version, and restart `./ocd` after changing this MCP config or launcher environment; running OpenCode sessions keep the already-started MCP server.
 
-### oh-my-openagent
+### oh-my-opencode-slim
 
-Pre-installed plugin providing multi-agent orchestration (Sisyphus, Oracle, Librarian, etc.), background agents, LSP/AST tools, and `ultrawork` command.
+The pinned `oh-my-opencode-slim` plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. The image stages Slim's bundled skills under `/config/skills` so they are available on first launch without allowing the plugin to modify the read-only config mount.
 
-The image includes `tmux` for oh-my-openagent team-mode/hyperplan workflows. Team-mode and top-level `tmux.enabled` integration are enabled in the committed model profiles. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
+The committed configuration keeps optional behavior conservative: Companion and Observer are disabled, automatic orchestrator wake is disabled, and multiplexer visualization is off unless `--ocd-tmux` is requested. Slim still delegates bounded work to background specialists as its core orchestration model.
 
-Use `./ocd --ocd-tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. Extra OpenCode arguments are forwarded after the workspace path, and `--ocd-profile` selects the mounted oh-my-openagent profile:
+The image includes `tmux` for opt-in Slim agent visualization. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
+
+Use `./ocd --ocd-tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. This also changes the generated Slim multiplexer setting from `none` to `tmux`. Extra OpenCode arguments are forwarded after the workspace path, and `--ocd-profile` selects a preset from the mounted Slim config:
 
 ```bash
 ./ocd --ocd-tmux
 ./ocd --ocd-tmux --ocd-profile minimax
 ```
 
-This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --ocd-tmux` from a host tmux pane while oh-my-openagent uses its own separate tmux server inside Docker. `--ocd-tmux` is for the terminal TUI and cannot be combined with `--ocd-web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
+This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --ocd-tmux` from a host tmux pane while Slim uses its own separate tmux server inside Docker. `--ocd-tmux` is for the terminal TUI and cannot be combined with `--ocd-web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
 
-When `--ocd-tmux` is used, the launcher starts OpenCode with `--port` because oh-my-openagent tmux pane spawning requires an OpenCode server port. The port defaults to `4096` and can be changed with `--ocd-port`, the same wrapper flag used by web mode.
+When `--ocd-tmux` is used, the launcher starts OpenCode with `--port` because Slim's tmux pane integration connects to the running OpenCode server. The port defaults to `4096` and can be changed with `--ocd-port`, the same wrapper flag used by web mode.
 
 The launcher pins the container's outer `TERM` to `xterm-256color`; tmux then sets its own terminal type inside the session. This avoids broken rendering when the host uses a terminal name that is not available in Debian terminfo.
 
-For team-mode pane visualization, the launcher also exports the active tmux pane id before starting OpenCode, so oh-my-openagent can resolve the caller pane and split the correct window.
+For background-agent pane visualization, the launcher also exports the active tmux pane id before starting OpenCode, so Slim can resolve the caller pane and split the correct window.
 
 ### Custom Markdown Agents
 
@@ -173,11 +179,11 @@ Switch models via the wrapper `--ocd-profile` flag:
 |---------|-------------|
 | (default) | Uses OpenAI models exclusively |
 | `minimax` | Uses MiniMax models for most agents (with OpenAI fallbacks) |
-| `ollama` | Uses the local Ollama-only profile in `config/oh-my-openagent.ollama.json` with the Ollama provider from `config/opencode.json` |
+| `ollama` | Uses the local Ollama-only preset with the Ollama provider from `config/opencode.json` |
 
-The committed Ollama profile maps all agents/categories to the local `gemma4:26b-16k` model by default.
+The committed Ollama preset maps all Slim agents to the local `gemma4:26b-16k` model by default.
 
-To create a new profile, copy `config/oh-my-openagent.json` to `config/oh-my-openagent.<profile>.json` and modify the model assignments.
+To create a new profile, add another entry under `presets` in `config/oh-my-opencode-slim.json`. Its key becomes the value accepted by `--ocd-profile`.
 
 ### Web Mode
 
@@ -228,15 +234,13 @@ Remove the preserved debug container with the printed `docker rm` command when y
 ├── ocd             # Run the container
 ├── clearcache      # Clear caches
 ├── fixsessions     # Repair legacy OpenCode session project scoping
-├── config/         # OpenCode and oh-my-openagent configs
+├── config/         # OpenCode and oh-my-opencode-slim configs
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
 │   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
-│   ├── oh-my-openagent.json        # oh-my-openagent default config — OpenAI only (committed)
-│   ├── oh-my-openagent.minimax.json   # oh-my-openagent MiniMax profile (committed)
-│   ├── oh-my-openagent.ollama.json    # oh-my-openagent Ollama-only profile (committed)
-│   ├── oh-my-openagent.local.json  # oh-my-openagent local overrides (gitignored, optional)
-│   ├── oh-my-openagent.merged.json # oh-my-openagent merged result (gitignored, auto-generated)
+│   ├── oh-my-opencode-slim.json        # Slim settings and all model presets (committed)
+│   ├── oh-my-opencode-slim.local.json  # Slim local overrides (gitignored, optional)
+│   ├── .oh-my-opencode-slim.<container>.json # Per-launch Slim config (gitignored, temporary)
 │   └── tmux.conf                   # Internal tmux config mounted to /home/coder/.tmux.conf
 ├── agents/         # Markdown custom agents mounted to /config/agents
 ├── data/           # Persistent home (mounted to /home/coder)
@@ -271,7 +275,7 @@ $ ollama run gemma4:26b
 >>> /bye
 ```
 
-This matches the committed local profile in `config/oh-my-openagent.ollama.json` and the Ollama model entry in `config/opencode.json`.
+This matches the committed `ollama` preset in `config/oh-my-opencode-slim.json` and the Ollama model entry in `config/opencode.json`.
 
 | Context Size | Use Case |
 |--------------|----------|
