@@ -1,16 +1,6 @@
 {
   "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.18/oh-my-opencode-slim.schema.json",
-  "preset": "default",
   "autoUpdate": false,
-  "disabled_agents": [
-    "observer"
-  ],
-  "companion": {
-    "enabled": false
-  },
-  "multiplexer": {
-    "type": "none"
-  },
   "backgroundJobs": {
     "orchestratorWake": {
       "enabled": false

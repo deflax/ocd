@@ -32,6 +32,8 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 
 ## Quick Start
 
+Install Docker and host `jq` first. `./ocd` performs configuration merging and Slim profile generation on the host before Docker starts.
+
 1. **Build the image:** `./build`
 2. **Run the container:** `./ocd`
 3. **Or start with internal tmux:** `./ocd --ocd-tmux` → opens OpenCode inside a container tmux session
@@ -121,7 +123,7 @@ The base OpenCode config starts the globally installed `playwright-mcp` binary w
 
 The pinned `oh-my-opencode-slim` plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. The image stages Slim's bundled skills under `/config/skills` so they are available on first launch without allowing the plugin to modify the read-only config mount.
 
-The committed configuration keeps optional behavior conservative: Companion and Observer are disabled, automatic orchestrator wake is disabled, and multiplexer visualization is off unless `--ocd-tmux` is requested. Slim still delegates bounded work to background specialists as its core orchestration model.
+Slim's optional behavior is conservative: Companion and Observer are disabled, automatic orchestrator wake is disabled in the committed config, and multiplexer visualization is off unless `--ocd-tmux` is requested. Wrapper generation sets the active Slim preset and multiplexer setting for each launch, so `preset` and `multiplexer` should not be set in the committed base config. Slim still delegates bounded work to background specialists as its core orchestration model.
 
 The image includes `tmux` for opt-in Slim agent visualization. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
 

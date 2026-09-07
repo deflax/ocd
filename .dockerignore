@@ -3,3 +3,6 @@ data/
 tmp/
 README.md
 LICENSE
+config/package.json
+config/package-lock.json
+config/node_modules/
