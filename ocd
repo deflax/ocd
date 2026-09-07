@@ -42,7 +42,7 @@ Run OpenCode inside the OCD Docker wrapper.
 
 OCD wrapper options:
   --ocd-help             Show this help and exit
-  --ocd-profile <name>   Select an oh-my-openagent profile (for example: minimax, ollama)
+  --ocd-profile <name>   Select an oh-my-opencode-slim preset (for example: minimax, ollama)
   --ocd-web              Start OpenCode web mode instead of the terminal TUI
   --ocd-tmux             Start OpenCode in an internal container tmux session
   --ocd-port <port>      Set the OpenCode server/web port used by --ocd-web or --ocd-tmux
@@ -60,7 +60,7 @@ EOF
 }
 
 parse_args() {
-    OMO_PROFILE=""
+    SLIM_PROFILE=""
     WEB_MODE=false
     TMUX_MODE=false
     DEBUG_MODE=false
@@ -75,7 +75,7 @@ parse_args() {
                 ;;
             --ocd-profile)
                 if [[ -n "${2:-}" ]]; then
-                    OMO_PROFILE="$2"
+                    SLIM_PROFILE="$2"
                     shift 2
                 else
                     echo "Error: --ocd-profile requires a value (e.g., --ocd-profile minimax)"
@@ -128,37 +128,50 @@ merge_opencode_config() {
 }
 
 print_available_profiles() {
-    for f in "${SCRIPT_DIR}"/config/oh-my-openagent.*.json; do
-        [ -f "$f" ] || continue
-        basename "$f" | sed 's/^oh-my-openagent\.//; s/\.json$//'  | grep -v '^local$\|^merged$'
-    done
+    jq -r '.presets | keys[]' "$1"
 }
 
-select_omo_base_config() {
-    if [ -n "$OMO_PROFILE" ]; then
-        OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.${OMO_PROFILE}.json"
-        if [ ! -f "$OMO_BASE_CONFIG" ]; then
-            echo "Error: Profile '${OMO_PROFILE}' not found (expected ${OMO_BASE_CONFIG})"
-            echo "Available profiles:"
-            print_available_profiles
-            exit 1
-        fi
-        echo "Using oh-my-openagent profile: ${OMO_PROFILE}"
+prepare_slim_config() {
+    local MULTIPLEXER_TYPE
+    local SLIM_CONFIG_DRAFT
+    local SLIM_LOCAL_CONFIG
+
+    SLIM_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode-slim.json"
+    SELECTED_SLIM_PROFILE="${SLIM_PROFILE:-default}"
+    MULTIPLEXER_TYPE="none"
+    if [ "$TMUX_MODE" = true ]; then
+        MULTIPLEXER_TYPE="tmux"
+    fi
+
+    SLIM_LOCAL_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode-slim.local.json"
+    SLIM_CONFIG_HOST="${SCRIPT_DIR}/config/.oh-my-opencode-slim.${CONTAINER_NAME}.json"
+    SLIM_CONFIG_DRAFT="${SLIM_CONFIG_HOST}.tmp"
+
+    if [ -f "$SLIM_LOCAL_CONFIG" ]; then
+        echo "Merging oh-my-opencode-slim.local.json into $(basename "$SLIM_BASE_CONFIG")..."
+        jq -s "$SLIM_JQ_MERGE_FILTER" \
+            "$SLIM_BASE_CONFIG" \
+            "$SLIM_LOCAL_CONFIG" \
+            > "$SLIM_CONFIG_DRAFT"
     else
-        OMO_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-openagent.json"
+        jq '.' "$SLIM_BASE_CONFIG" > "$SLIM_CONFIG_DRAFT"
     fi
-}
 
-merge_omo_config() {
-    OMO_CONFIG_HOST="$OMO_BASE_CONFIG"
-    if [ -f "${SCRIPT_DIR}/config/oh-my-openagent.local.json" ]; then
-        echo "Merging oh-my-openagent.local.json into $(basename "$OMO_BASE_CONFIG")..."
-        jq -s "$JQ_MERGE_FILTER" \
-            "$OMO_BASE_CONFIG" \
-            "${SCRIPT_DIR}/config/oh-my-openagent.local.json" \
-            > "${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
-        OMO_CONFIG_HOST="${SCRIPT_DIR}/config/oh-my-openagent.merged.json"
+    if ! jq -e --arg profile "$SELECTED_SLIM_PROFILE" '.presets[$profile] | type == "object"' "$SLIM_CONFIG_DRAFT" >/dev/null; then
+        echo "Error: Profile '${SELECTED_SLIM_PROFILE}' not found in the effective Slim config"
+        echo "Available profiles:"
+        print_available_profiles "$SLIM_CONFIG_DRAFT"
+        exit 1
     fi
+
+    jq \
+        --arg profile "$SELECTED_SLIM_PROFILE" \
+        --arg multiplexer "$MULTIPLEXER_TYPE" \
+        '.preset = $profile | .multiplexer.type = $multiplexer' \
+        "$SLIM_CONFIG_DRAFT" \
+        > "$SLIM_CONFIG_HOST"
+    rm -f "$SLIM_CONFIG_DRAFT"
+    echo "Using oh-my-opencode-slim preset: ${SELECTED_SLIM_PROFILE}"
 }
 
 ensure_opencode_project_id() {
@@ -260,6 +273,11 @@ build_opencode_cmd() {
             echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --ocd-web"
         fi
     elif [ "$TMUX_MODE" = true ]; then
+        while port_in_use "${WEB_PORT}"; do
+            echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
+            WEB_PORT=$((WEB_PORT + 1))
+        done
+
         printf -v TMUX_SHELL_COMMAND 'opencode --port %q %q' "${WEB_PORT}" "${CONTAINER_WORKSPACE}"
         for arg in "$@"; do
             printf -v QUOTED_ARG '%q' "$arg"
@@ -285,6 +303,13 @@ restore_terminal() {
     if [ -t 1 ]; then
         printf '\033[?1000l\033[?1002l\033[?1003l\033[?1004l\033[?1005l\033[?1006l\033[?1015l\033[?2004l\033[<u\033[>4;0m\033[?25h\033[0m'
     fi
+}
+
+cleanup() {
+    if [ -n "${SLIM_CONFIG_HOST:-}" ]; then
+        rm -f "${SLIM_CONFIG_HOST}" "${SLIM_CONFIG_HOST}.tmp"
+    fi
+    restore_terminal
 }
 
 build_rm_args() {
@@ -346,7 +371,7 @@ EOF
 print_start_banner() {
     echo "Launch details:"
     echo "  Mode: $([ "$WEB_MODE" = true ] && echo web || { [ "$TMUX_MODE" = true ] && echo tmux || echo terminal; })"
-    echo "  Profile: ${OMO_PROFILE:-default}"
+    echo "  Profile: ${SELECTED_SLIM_PROFILE}"
     echo "  Image: ${IMAGE_NAME}"
     echo "  Container: ${CONTAINER_NAME}"
     echo "  Display: ${HOST_DISPLAY:-<unset>}"
@@ -372,7 +397,7 @@ run_container() {
         -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
         -v "${OPENCODE_QUOTA_CONFIG_HOST}:/config/opencode-quota/quota-toast.json:ro" \
         -v "${PLAYWRIGHT_MCP_CONFIG_HOST}:/config/playwright-mcp.json:ro" \
-        -v "${OMO_CONFIG_HOST}:/config/oh-my-openagent.json:ro" \
+        -v "${SLIM_CONFIG_HOST}:/config/oh-my-opencode-slim.json:ro" \
         -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
         -v "${TMUX_CONFIG_HOST}:/home/coder/.tmux.conf:ro" \
         -v "${SCRIPT_DIR}/agents:/config/agents:ro" \
@@ -389,6 +414,8 @@ run_container() {
         -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
         -e OPENCODE_CONFIG=/config/opencode.json \
         -e OPENCODE_CONFIG_DIR=/config \
+        -e OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true \
+        -e OPENCODE_ENABLE_EXA=1 \
         -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \
         "${SERVER_ENV[@]}" \
         --security-opt no-new-privileges:true \
@@ -422,6 +449,7 @@ main() {
 
     IMAGE_NAME="ocd:latest"
     CONTAINER_NAME="ocd-$(date +%Y%m%d-%H%M%S)-$$"
+    trap cleanup EXIT INT TERM HUP
 
     if ! docker image inspect "${IMAGE_NAME}" >/dev/null 2>&1; then
         echo "Error: Image '${IMAGE_NAME}' not found."
@@ -432,6 +460,8 @@ main() {
     # Config: merge local overrides on top of base config if they exist.
     # Objects are merged recursively; arrays are appended with duplicate entries skipped.
     JQ_MERGE_FILTER='def merge_arrays($a; $b): reduce $b[] as $item ($a; if index($item) == null then . + [$item] else . end); def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) elif (($a[$key] | type) == "array" and ($b[$key] | type) == "array") then merge_arrays($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
+    # Slim follows its native override contract: objects merge recursively and arrays are replaced.
+    SLIM_JQ_MERGE_FILTER='def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
     OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
     OPENCODE_QUOTA_CONFIG_HOST="${SCRIPT_DIR}/config/opencode-quota/quota-toast.json"
     PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
@@ -439,12 +469,11 @@ main() {
     TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
     merge_opencode_config
 
-    # oh-my-openagent config: select base config based on --ocd-profile flag.
-    # Available profiles are files named oh-my-openagent.<profile>.json in config/.
-    # Default (no --ocd-profile) uses oh-my-openagent.json.
+    # oh-my-opencode-slim config: select a named preset with --ocd-profile.
+    # Presets live together in config/oh-my-opencode-slim.json; local overrides
+    # are merged before the selected preset and multiplexer mode are applied.
     # NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
-    select_omo_base_config
-    merge_omo_config
+    prepare_slim_config
 
     ensure_opencode_project_id
     setup_macos_xquartz
@@ -453,10 +482,6 @@ main() {
 
     build_opencode_cmd "${DOCKER_ARGS[@]}"
     build_server_env
-
-    if [ -t 1 ]; then
-        trap restore_terminal EXIT INT TERM HUP
-    fi
 
     build_rm_args
     print_banner

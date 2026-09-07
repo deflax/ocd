@@ -7,8 +7,8 @@ data/*
 # Local config overrides (may contain sensitive keys/settings)
 config/opencode.local.json
 config/opencode.merged.json
-config/oh-my-openagent.local.json
-config/oh-my-openagent.merged.json
+config/oh-my-opencode-slim.local.json
+config/.oh-my-opencode-slim.*.json
 
 # Temporary files (cloned repos, build artifacts)
 tmp/
