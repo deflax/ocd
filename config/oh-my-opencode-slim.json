@@ -45,36 +45,40 @@
         "mcps": []
       }
     },
-    "minimax": {
+    "astra": {
       "orchestrator": {
-        "model": "minimax/MiniMax-M2.7",
+        "model": "openai/gpt-5.6-terra",
+        "variant": "high",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.5",
-        "variant": "high",
+        "model": "openai/gpt-6-astra",
+        "variant": "low",
         "skills": ["simplify"],
         "mcps": []
       },
       "librarian": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
+        "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "openai/gpt-5.6-luna",
+        "variant": "low",
         "skills": [],
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-5.5",
+        "model": "openai/gpt-5.6-luna",
         "variant": "medium",
         "skills": [],
         "mcps": []
       },
       "fixer": {
-        "model": "minimax/MiniMax-M2.7",
+        "model": "openai/gpt-5.6-luna",
+        "variant": "high",
         "skills": [],
         "mcps": []
       }
