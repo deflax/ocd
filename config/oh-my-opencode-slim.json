@@ -1,0 +1,125 @@
+{
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.18/oh-my-opencode-slim.schema.json",
+  "preset": "default",
+  "autoUpdate": false,
+  "disabled_agents": [
+    "observer"
+  ],
+  "companion": {
+    "enabled": false
+  },
+  "multiplexer": {
+    "type": "none"
+  },
+  "backgroundJobs": {
+    "orchestratorWake": {
+      "enabled": false
+    }
+  },
+  "presets": {
+    "default": {
+      "orchestrator": {
+        "model": "openai/gpt-5.6-terra",
+        "variant": "high",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "openai/gpt-5.6-sol",
+        "variant": "high",
+        "skills": ["simplify"],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "openai/gpt-5.6-luna",
+        "variant": "low",
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "explorer": {
+        "model": "openai/gpt-5.6-luna",
+        "variant": "low",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-5.6-luna",
+        "variant": "medium",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "openai/gpt-5.6-luna",
+        "variant": "high",
+        "skills": [],
+        "mcps": []
+      }
+    },
+    "minimax": {
+      "orchestrator": {
+        "model": "minimax/MiniMax-M2.7",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "openai/gpt-5.5",
+        "variant": "high",
+        "skills": ["simplify"],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "openai/gpt-5.4-mini",
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "explorer": {
+        "model": "openai/gpt-5.4-mini",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "openai/gpt-5.5",
+        "variant": "medium",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "minimax/MiniMax-M2.7",
+        "skills": [],
+        "mcps": []
+      }
+    },
+    "ollama": {
+      "orchestrator": {
+        "model": "ollama/gemma4:26b-16k",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"]
+      },
+      "oracle": {
+        "model": "ollama/gemma4:26b-16k",
+        "skills": ["simplify"],
+        "mcps": []
+      },
+      "librarian": {
+        "model": "ollama/gemma4:26b-16k",
+        "skills": [],
+        "mcps": ["context7", "gh_grep"]
+      },
+      "explorer": {
+        "model": "ollama/gemma4:26b-16k",
+        "skills": [],
+        "mcps": []
+      },
+      "designer": {
+        "model": "ollama/gemma4:26b-16k",
+        "skills": [],
+        "mcps": []
+      },
+      "fixer": {
+        "model": "ollama/gemma4:26b-16k",
+        "skills": [],
+        "mcps": []
+      }
+    }
+  }
+}
