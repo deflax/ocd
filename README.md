@@ -257,7 +257,7 @@ The `ocd` script:
 - Generates a unique Docker container name per run so multiple `ocd` containers can run at a time
 - Prints an ASCII startup banner for interactive terminals unless `OCD_NO_BANNER` is set
 - Prints a startup summary with the selected mode/profile, workspace mapping, mounted configs, display/X11 state, forwarded OpenCode args, and container command
-- Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and passes that path to `opencode` so new TUI sessions scope to the mounted workspace
+- Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and sets it as the container working directory so new TUI sessions scope to the mounted workspace
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
 - Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
 - Mounts `agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
