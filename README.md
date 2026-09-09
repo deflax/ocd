@@ -63,6 +63,7 @@ Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass
 ```bash
 ./ocd -- --help
 ./ocd --ocd-profile astra -- --version
+./ocd --ocd-profile astra -- models --refresh
 ```
 
 Available wrapper options are `--ocd-web`, `--ocd-tmux`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.

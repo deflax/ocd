@@ -285,7 +285,7 @@ build_opencode_cmd() {
         done
         OPENCODE_CMD=(tmux new-session -s opencode "export TMUX_PANE=\$(tmux display-message -p '#{pane_id}'); exec ${TMUX_SHELL_COMMAND}")
     else
-        OPENCODE_CMD=(opencode "${CONTAINER_WORKSPACE}" "$@")
+        OPENCODE_CMD=(opencode "$@")
     fi
 }
 
