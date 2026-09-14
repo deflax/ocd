@@ -56,8 +56,8 @@
     }
   },
   "plugin": [
-    "oh-my-opencode-slim@2.2.18",
-    "@slkiser/opencode-quota@4.8.1"
+    "oh-my-opencode-slim@2.2.20",
+    "@slkiser/opencode-quota@4.9.0"
   ],
   "mcp": {
     "playwright": {

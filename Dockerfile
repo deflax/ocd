@@ -95,8 +95,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 #    && bunx --version
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.18.18 \
-    oh-my-opencode-slim@2.2.18 \
+    opencode-ai@1.18.30 \
+    oh-my-opencode-slim@2.2.20 \
     @playwright/mcp@latest \
     @ast-grep/cli@latest \
     @biomejs/biome@latest \
