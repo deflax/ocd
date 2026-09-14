@@ -1,0 +1,10 @@
+{
+  "agent": {
+    "plan": {
+      "model": "ollama/gemma4:26b-16k"
+    },
+    "build": {
+      "model": "ollama/gemma4:26b-16k"
+    }
+  }
+}

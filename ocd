@@ -117,13 +117,34 @@ parse_args() {
 }
 
 merge_opencode_config() {
-    if [ -f "${SCRIPT_DIR}/config/opencode.local.json" ]; then
+    local LOCAL_CONFIG="${SCRIPT_DIR}/config/opencode.local.json"
+    local OLLAMA_OVERLAY="${SCRIPT_DIR}/config/opencode.ollama.json"
+    local MERGED_CONFIG="${SCRIPT_DIR}/config/opencode.merged.json"
+
+    if [ -f "$LOCAL_CONFIG" ]; then
         echo "Merging opencode.local.json into opencode.json..."
         jq -s "$JQ_MERGE_FILTER" \
             "${SCRIPT_DIR}/config/opencode.json" \
-            "${SCRIPT_DIR}/config/opencode.local.json" \
-            > "${SCRIPT_DIR}/config/opencode.merged.json"
-        OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.merged.json"
+            "$LOCAL_CONFIG" \
+            > "$MERGED_CONFIG"
+        OPENCODE_CONFIG_HOST="$MERGED_CONFIG"
+    fi
+
+    if [ "$SLIM_PROFILE" = "ollama" ]; then
+        echo "Merging opencode.ollama.json into the OpenCode config..."
+        if [ -f "$LOCAL_CONFIG" ]; then
+            jq -s "$JQ_MERGE_FILTER" \
+                "$MERGED_CONFIG" \
+                "$OLLAMA_OVERLAY" \
+                > "${MERGED_CONFIG}.tmp"
+            mv "${MERGED_CONFIG}.tmp" "$MERGED_CONFIG"
+        else
+            jq -s "$JQ_MERGE_FILTER" \
+                "${SCRIPT_DIR}/config/opencode.json" \
+                "$OLLAMA_OVERLAY" \
+                > "$MERGED_CONFIG"
+        fi
+        OPENCODE_CONFIG_HOST="$MERGED_CONFIG"
     fi
 }
 
