@@ -15,44 +15,6 @@
         "mcps": ["*", "!context7"]
       },
       "oracle": {
-        "model": "openai/gpt-5.6-sol",
-        "variant": "high",
-        "skills": ["simplify"],
-        "mcps": []
-      },
-      "librarian": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "low",
-        "skills": [],
-        "mcps": ["context7", "gh_grep"]
-      },
-      "explorer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "low",
-        "skills": [],
-        "mcps": []
-      },
-      "designer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "medium",
-        "skills": [],
-        "mcps": []
-      },
-      "fixer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "high",
-        "skills": [],
-        "mcps": []
-      }
-    },
-    "astra": {
-      "orchestrator": {
-        "model": "openai/gpt-5.6-terra",
-        "variant": "high",
-        "skills": ["*"],
-        "mcps": ["*", "!context7"]
-      },
-      "oracle": {
         "model": "openai/gpt-6-astra",
         "variant": "low",
         "skills": ["simplify"],
@@ -77,8 +39,8 @@
         "mcps": []
       },
       "fixer": {
-        "model": "openai/gpt-5.6-luna",
-        "variant": "high",
+        "model": "openai/gpt-5.6-terra",
+        "variant": "low",
         "skills": [],
         "mcps": []
       }
@@ -114,6 +76,16 @@
         "skills": [],
         "mcps": []
       }
+    }
+  },
+  "agents": {
+    "critical-fixer": {
+      "model": "openai/gpt-5.6-sol",
+      "variant": "low",
+      "skills": [],
+      "mcps": [],
+      "prompt": "Handle high-stakes, tightly specified implementations. Make minimal changes, run targeted validation, and escalate architectural uncertainty.",
+      "orchestratorPrompt": "Route security-sensitive, data-integrity, or production-critical fixes only."
     }
   }
 }

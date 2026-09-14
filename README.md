@@ -62,8 +62,8 @@ Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass
 
 ```bash
 ./ocd -- --help
-./ocd --ocd-profile astra -- --version
-./ocd --ocd-profile astra -- models --refresh
+./ocd --ocd-profile ollama -- --version
+./ocd --ocd-profile ollama -- models --refresh
 ```
 
 Available wrapper options are `--ocd-web`, `--ocd-tmux`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.
@@ -132,7 +132,7 @@ Use `./ocd --ocd-tmux` to start OpenCode inside a visible container-internal tmu
 
 ```bash
 ./ocd --ocd-tmux
-./ocd --ocd-tmux --ocd-profile astra
+./ocd --ocd-tmux --ocd-profile ollama
 ```
 
 This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --ocd-tmux` from a host tmux pane while Slim uses its own separate tmux server inside Docker. `--ocd-tmux` is for the terminal TUI and cannot be combined with `--ocd-web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
@@ -172,7 +172,6 @@ Switch models via the wrapper `--ocd-profile` flag:
 
 ```bash
 ./ocd                        # Use default OpenAI models
-./ocd --ocd-profile astra    # Use GPT-6 Astra for Oracle
 ./ocd --ocd-profile ollama   # Use local Ollama models only
 ```
 
@@ -180,8 +179,7 @@ Switch models via the wrapper `--ocd-profile` flag:
 
 | Profile | Description |
 |---------|-------------|
-| (default) | Uses OpenAI models exclusively |
-| `astra` | Retains default routing except Oracle uses `gpt-6-astra` at low reasoning effort; requires direct OpenAI-provider access to that model, subject to account availability |
+| (default) | Uses OpenAI models exclusively, with `gpt-6-astra` at low reasoning effort for Oracle |
 | `ollama` | Uses the local Ollama-only preset with the Ollama provider from `config/opencode.json` |
 
 The committed Ollama preset maps all Slim agents to the local `gemma4:26b-16k` model by default.
@@ -195,7 +193,7 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ```bash
 ./ocd --ocd-web                              # Web UI on http://localhost:4096
 ./ocd --ocd-web --ocd-port 8080              # Custom port
-./ocd --ocd-web --ocd-profile astra          # Combine with model profiles
+./ocd --ocd-web --ocd-profile ollama         # Combine with model profiles
 ```
 
 Web mode cannot be combined with `--ocd-tmux`; tmux mode is only for the terminal TUI. Web mode starts with the requested port and automatically increments to the next available port if it is already in use.
