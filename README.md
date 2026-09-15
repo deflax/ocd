@@ -80,7 +80,7 @@ Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still
 |------|-------------|
 | `config/opencode.json` | Base config |
 | `config/opencode.local.json` | Local overrides (gitignored) |
-| `config/opencode.ollama.json` | Ollama core plan/build overlay (committed) |
+| `config/opencode.ollama.json` | Ollama Research/Plan/Build model overlay (committed) |
 | `config/opencode.merged.json` | Auto-merged result (gitignored) |
 | `config/playwright-mcp.json` | Playwright MCP Chromium launch config mounted into `/config` |
 | `config/oh-my-opencode-slim.json` | Slim settings and model presets |
@@ -101,11 +101,15 @@ Create `config/opencode.local.json` to override settings without committing:
 
 On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. For non-Ollama profiles, this base → optional local merge is the complete OpenCode config flow.
 
-When `--ocd-profile ollama` is selected, `ocd` additionally merges the committed `config/opencode.ollama.json` overlay after the base and optional local config: base → optional local → Ollama overlay. The overlay applies exclusively to the Ollama profile and authoritatively sets the core `agent.plan.model` and `agent.build.model` values, overriding local values for those two fields. A generated `opencode.merged.json` is written only when a local config or the Ollama overlay is active; the resulting config is mounted read-only into the container.
+When `--ocd-profile ollama` is selected, `ocd` additionally merges the committed `config/opencode.ollama.json` overlay after the base and optional local config: base → optional local → Ollama overlay. The overlay applies exclusively to the Ollama profile and authoritatively sets the `agent.research.model`, `agent.plan.model`, and `agent.build.model` values, overriding local values for those fields. A generated `opencode.merged.json` is written only when a local config or the Ollama overlay is active; the resulting config is mounted read-only into the container.
 
 Create `config/oh-my-opencode-slim.local.json` to override Slim settings or add machine-specific presets. Slim objects are merged recursively and arrays are replaced, matching Slim's native project-override behavior; this lets a local file clear or replace agent skills, MCPs, and disabled-agent lists. The launcher merges the local file, validates the preset selected by `--ocd-profile`, and writes a unique temporary config for that container. The selected profile and `--ocd-tmux` mode always win over local `preset` and multiplexer values. The temporary file is removed when the launcher exits, so concurrent containers cannot overwrite each other's selection.
 
 The base `config/opencode.json` also carries shell permissions. Current defaults allow bash commands broadly while denying `git push`, `sudo`, and `su` patterns.
+
+### Primary Agent
+
+Research is the default primary agent. It is read-only and intended for research and analysis; Plan and Build are disabled. Invoke the appropriate specialist agent for implementation work.
 
 ### X11 And Headed Chrome Support
 
@@ -183,9 +187,9 @@ Switch models via the wrapper `--ocd-profile` flag:
 | Profile | Description |
 |---------|-------------|
 | (default) | Uses OpenAI models exclusively, with `gpt-6-astra` at low reasoning effort for Oracle |
-| `ollama` | Routes Slim specialists and core plan/build agents to local Ollama using the provider from `config/opencode.json` |
+| `ollama` | Routes Slim specialists plus Research, Plan, and Build to local Ollama using the provider from `config/opencode.json` |
 
-The committed Ollama preset and core-agent overlay map all Slim specialists plus OpenCode plan/build to the local `gemma4:26b-16k` model. The Ollama profile is not an offline or network-isolated mode; the container retains its normal host networking and configured tools/services.
+The committed Ollama preset and core-agent overlay map all Slim specialists plus OpenCode Research, Plan, and Build to the local `gemma4:26b-16k` model. The Ollama profile is not an offline or network-isolated mode; the container retains its normal host networking and configured tools/services.
 
 To create a new profile, add another entry under `presets` in `config/oh-my-opencode-slim.json`. Its key becomes the value accepted by `--ocd-profile`.
 
@@ -241,7 +245,7 @@ Remove the preserved debug container with the printed `docker rm` command when y
 ├── config/         # OpenCode and oh-my-opencode-slim configs
 │   ├── opencode.json              # Base config (committed)
 │   ├── opencode.local.json        # Local overrides (gitignored, optional)
-│   ├── opencode.ollama.json       # Ollama core plan/build overlay (committed)
+│   ├── opencode.ollama.json       # Ollama Research/Plan/Build model overlay (committed)
 │   ├── opencode.merged.json       # Merged result (gitignored, auto-generated)
 │   ├── oh-my-opencode-slim.json        # Slim settings and all model presets (committed)
 │   ├── oh-my-opencode-slim.local.json  # Slim local overrides (gitignored, optional)

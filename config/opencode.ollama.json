@@ -5,6 +5,9 @@
     },
     "build": {
       "model": "ollama/gemma4:26b-16k"
+    },
+    "research": {
+      "model": "ollama/gemma4:26b-16k"
     }
   }
 }
