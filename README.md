@@ -109,7 +109,7 @@ The base `config/opencode.json` also carries shell permissions. Current defaults
 
 ### Primary Agent
 
-Research is the default primary agent. It is read-only and intended for research and analysis; Plan and Build are disabled. Invoke the appropriate specialist agent for implementation work.
+Orchestrator is the default primary agent. Research remains an optional, visible read-only primary agent for research and analysis; Plan and Build are disabled. Invoke the appropriate specialist agent for implementation work.
 
 ### X11 And Headed Chrome Support
 
