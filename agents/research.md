@@ -1,7 +1,6 @@
 ---
 description: Deep research agent for investigating a user's prompt before answering or acting
 mode: primary
-model: openai/gpt-5.6-terra
 temperature: 0.2
 reasoningEffort: high
 textVerbosity: high

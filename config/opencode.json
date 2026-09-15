@@ -75,6 +75,9 @@
         "write": "deny",
         "bash": "deny"
       }
+    },
+    "hallucinator": {
+      "model": "openai/gpt-5.6-luna"
     }
   },
   "plugin": [
