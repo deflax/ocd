@@ -63,6 +63,7 @@ parse_args() {
     WEB_MODE=false
     DEBUG_MODE=false
     WEB_PORT="${OCD_WEB_PORT:-4096}"
+    WEB_HOSTNAME="${OCD_WEB_HOSTNAME:-127.0.0.1}"
     DOCKER_ARGS=()
 
     while [[ $# -gt 0 ]]; do
@@ -291,15 +292,23 @@ port_in_use() {
     docker ps --format '{{.Ports}}' | grep -q ":$1->" || (: <>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
 }
 
+validate_web_hostname() {
+    if [ -z "$WEB_HOSTNAME" ] || [[ ! "$WEB_HOSTNAME" =~ ^[A-Za-z0-9._:-]+$ ]]; then
+        echo "Error: OCD_WEB_HOSTNAME must be a non-empty hostname or IP address containing only letters, numbers, dots, colons, underscores, or hyphens."
+        exit 1
+    fi
+}
+
 build_opencode_cmd() {
     if [ "$WEB_MODE" = true ]; then
+        validate_web_hostname
         while port_in_use "${WEB_PORT}"; do
             echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
             WEB_PORT=$((WEB_PORT + 1))
         done
 
-        OPENCODE_CMD=(opencode2 serve --hostname 0.0.0.0 --port "${WEB_PORT}")
-        echo "Web mode uses OpenCode v2 pairing credentials; do not expose it outside trusted networks."
+        OPENCODE_CMD=(opencode2 serve --hostname "${WEB_HOSTNAME}" --port "${WEB_PORT}")
+        echo "Web mode uses OpenCode v2 pairing credentials. It binds to ${WEB_HOSTNAME}."
     else
         case "${1:-}" in
             auth)
@@ -405,6 +414,9 @@ EOF
 print_start_banner() {
     echo "Launch details:"
     echo "  Mode: $([ "$WEB_MODE" = true ] && echo web || echo terminal)"
+    if [ "$WEB_MODE" = true ]; then
+        echo "  Web hostname: ${WEB_HOSTNAME}"
+    fi
     echo "  Profile: ${SELECTED_SLIM_PROFILE}"
     echo "  Image: ${IMAGE_NAME}"
     echo "  Container: ${CONTAINER_NAME}"
@@ -442,7 +454,6 @@ run_container() {
         -e TERM=xterm-256color \
         -e LANG=C.UTF-8 \
         -e LC_ALL=C.UTF-8 \
-        -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
         -e OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true \
         -e OPENCODE_ENABLE_EXA=1 \
         -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \

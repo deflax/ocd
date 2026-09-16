@@ -77,7 +77,7 @@ Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass
 
 Available wrapper options are `--ocd-web`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.
 
-Web mode always uses `opencode2 serve --hostname 0.0.0.0 --port <port>`; extra OpenCode arguments are not forwarded.
+Web mode uses `opencode2 serve --hostname <hostname> --port <port>` and binds to `127.0.0.1` by default; extra OpenCode arguments are not forwarded.
 
 ## Cache Cleanup
 
@@ -212,17 +212,19 @@ Start `opencode2` with a browser-based UI instead of the terminal TUI:
 ./ocd --ocd-web                              # Web UI on http://localhost:4096
 ./ocd --ocd-web --ocd-port 8080              # Custom port
 ./ocd --ocd-web --ocd-profile ollama         # Combine with model profiles
+OCD_WEB_HOSTNAME=0.0.0.0 ./ocd --ocd-web     # Opt in to network exposure
 ```
 
 Web mode starts with the requested port and automatically increments to the next available port if it is already in use. `--ocd-port` applies to web mode only.
 
-OpenCode v2's daemon-managed `serve` pairing Basic-auth credential uses the fixed username `opencode`; there is no user-configurable password environment variable. The server binds to `0.0.0.0`, so use it only on trusted networks and do not expose it publicly.
+By default, the server binds only to localhost (`127.0.0.1`). To expose it on the network, explicitly set `OCD_WEB_HOSTNAME=0.0.0.0`; do so only on trusted networks and do not expose it publicly. OpenCode v2's daemon-managed `serve` pairing Basic-auth credential uses the fixed username `opencode`; there is no user-configurable password environment variable.
 
 **Environment variables:**
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OCD_WEB_PORT` | Default web port (overridden by `--ocd-port`) | `4096` |
+| `OCD_WEB_HOSTNAME` | Web server bind hostname or IP address | `127.0.0.1` |
 | `OCD_NO_BANNER` | Suppress the interactive startup banner when set | (unset) |
 
 ### Debugging Container Exits

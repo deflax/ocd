@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.18/oh-my-opencode-slim.schema.json",
+  "$schema": "https://unpkg.com/oh-my-opencode-slim@2.2.20/oh-my-opencode-slim.schema.json",
   "autoUpdate": false,
   "backgroundJobs": {
     "orchestratorWake": {
