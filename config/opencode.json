@@ -76,8 +76,7 @@
     }
   },
   "plugins": [
-    "oh-my-opencode-slim@2.2.20",
-    "@slkiser/opencode-quota@4.9.0"
+    "oh-my-opencode-slim@2.2.20"
   ],
   "skills": ["/config/skills"],
   "mcp": {

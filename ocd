@@ -142,6 +142,33 @@ merge_opencode_config() {
     fi
 }
 
+seed_cli_config() {
+    local CLI_TEMPLATE="${SCRIPT_DIR}/config/cli.json"
+    local CLI_CONFIG_DIR="${SCRIPT_DIR}/data/.config/opencode"
+    local CLI_CONFIG_FILE="${CLI_CONFIG_DIR}/cli.json"
+
+    if [ -s "$CLI_CONFIG_FILE" ]; then
+        return 0
+    fi
+
+    if ! mkdir -p "$CLI_CONFIG_DIR"; then
+        echo "Error: unable to create persistent OpenCode CLI config directory: ${CLI_CONFIG_DIR}" >&2
+        exit 1
+    fi
+    if [ ! -d "$CLI_CONFIG_DIR" ] || [ ! -w "$CLI_CONFIG_DIR" ]; then
+        echo "Error: persistent OpenCode CLI config directory is not writable: ${CLI_CONFIG_DIR}" >&2
+        exit 1
+    fi
+    if [ ! -r "$CLI_TEMPLATE" ]; then
+        echo "Error: OpenCode CLI config template is not readable: ${CLI_TEMPLATE}" >&2
+        exit 1
+    fi
+    if ! cp "$CLI_TEMPLATE" "$CLI_CONFIG_FILE" || [ ! -s "$CLI_CONFIG_FILE" ]; then
+        echo "Error: unable to seed persistent OpenCode CLI config: ${CLI_CONFIG_FILE}" >&2
+        exit 1
+    fi
+}
+
 print_available_profiles() {
     jq -r '.presets | keys[]' "$1"
 }
@@ -374,10 +401,8 @@ run_container() {
         --shm-size=1g \
         -v "${SCRIPT_DIR}/data:/home/coder:rw" \
         -v "${CORE_CONFIG_HOST}:/home/coder/.config/opencode/opencode.json:ro" \
-        -v "${OPENCODE_QUOTA_CONFIG_HOST}:/home/coder/.config/opencode/opencode-quota/quota-toast.json:ro" \
         -v "${PLAYWRIGHT_MCP_CONFIG_HOST}:/config/playwright-mcp.json:ro" \
         -v "${SLIM_CONFIG_HOST}:/home/coder/.config/opencode/oh-my-opencode-slim.json:ro" \
-        -v "${CLI_CONFIG_HOST}:/home/coder/.config/opencode/cli.json:ro" \
         -v "${SCRIPT_DIR}/agents:/home/coder/.config/opencode/agents:ro" \
         -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
         "${X11_MOUNT[@]}" \
@@ -438,16 +463,16 @@ main() {
     # Slim follows its native override contract: objects merge recursively and arrays are replaced.
     SLIM_JQ_MERGE_FILTER='def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
     CORE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
-    OPENCODE_QUOTA_CONFIG_HOST="${SCRIPT_DIR}/config/opencode-quota/quota-toast.json"
     PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
-    CLI_CONFIG_HOST="${SCRIPT_DIR}/config/cli.json"
     merge_opencode_config
 
     # oh-my-opencode-slim config: select a named preset with --ocd-profile.
     # Presets live together in config/oh-my-opencode-slim.json; local overrides
     # are merged before the selected preset is applied.
-    # NOTE: cli.json is NOT part of the merge flow — OpenCode discovers it from its standard config directory.
+    # NOTE: cli.json is seeded once into the persistent standard config directory and managed by OpenCode.
     prepare_slim_config
+
+    seed_cli_config
 
     ensure_opencode_project_id
     setup_macos_xquartz

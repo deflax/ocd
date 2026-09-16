@@ -71,7 +71,7 @@ Web mode always uses `opencode2 serve --hostname 0.0.0.0 --port <port>`; extra O
 
 ## Cache Cleanup
 
-Use `./clearcache` to remove persistent runtime data when stale package state interferes with OpenCode or application builds. It preserves OpenCode sessions and login state: `data/.local/share/opencode/auth.json`, `opencode.db*`, `snapshot/`, and `storage/session_diff/`. Generated config contents under `data/.config/`, including stale `data/.config/opencode` package files or JSONC files, are removed because wrapper config is mounted from `config/`. Run `./clearcache --dry-run` first to see what would be deleted.
+Use `./clearcache` to remove persistent runtime data when stale package state interferes with OpenCode or application builds. It preserves OpenCode sessions and login state: `data/.local/share/opencode/auth.json`, `opencode.db*`, `snapshot/`, and `storage/session_diff/`. Generated config contents under `data/.config/`, including the OpenCode-managed `data/.config/opencode/cli.json`, are removed. Run `./clearcache --dry-run` first to see what would be deleted.
 
 Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still attached to the old shared `global` project. Run `./fixsessions` to move those sessions into per-directory project records so they stop appearing in unrelated workspaces. The repair updates only `data/.local/share/opencode/opencode.db`; it preserves auth and does not delete sessions.
 
@@ -87,7 +87,7 @@ Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still
 | `config/oh-my-opencode-slim.json` | Slim settings and model presets |
 | `config/oh-my-opencode-slim.local.json` | Local Slim overrides (gitignored) |
 | `config/.oh-my-opencode-slim.<container>.json` | Per-launch selected/merged Slim config (gitignored, temporary) |
-| `config/cli.json` | OpenCode v2 CLI theme/config mounted into the standard global config directory |
+| `config/cli.json` | Committed template seeded into the persistent OpenCode v2 CLI config on first launch |
 | `agents/*.md` | Wrapper-level custom OpenCode agents |
 | `data/` | Persistent home directory |
 
@@ -113,11 +113,13 @@ The launcher does not set a global XDG override or private OpenCode config envir
 
 - `opencode.json` — base or generated merged core config
 - `oh-my-opencode-slim.json` — the selected, generated Slim config
-- `cli.json` — CLI theme configuration
-- `opencode-quota/quota-toast.json` — quota plugin sidecar configuration
 - `agents/` — wrapper-level Markdown agents
 
 The Playwright MCP launch file remains mounted at `/config/playwright-mcp.json`. Slim's image-staged skills remain at `/config/skills`; the v2 core config explicitly loads that path with `"skills": ["/config/skills"]`.
+
+`config/cli.json` is seeded once into the writable persistent home at `data/.config/opencode/cli.json` when that file is absent or empty. OpenCode manages it after seeding; a non-empty user-managed file is never overwritten or bind-mounted. To reset it, run `./clearcache`, which preserves sessions and authentication.
+
+The Quota plugin is omitted because its current release is not compatible with OpenCode v2; no legacy configuration or workaround is used.
 
 ### Primary Agent
 
@@ -258,7 +260,8 @@ The `ocd` script:
 - Prints a startup summary with the selected mode/profile, workspace mapping, mounted configs, display/X11 state, forwarded OpenCode args, and container command
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and sets it as the container working directory so new TUI sessions scope to the mounted workspace
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
-- Mounts effective config assets read-only to `~/.config/opencode/` for standard OpenCode v2 discovery: core config, selected Slim config, `cli.json`, quota sidecar, and custom agents
+- Mounts core config, selected Slim config, and custom agents read-only to `~/.config/opencode/` for standard OpenCode v2 discovery
+- Seeds the `cli.json` template once into writable persistent OpenCode home storage; OpenCode manages it afterward
 - Keeps Playwright's launch config at `/config/playwright-mcp.json` and Slim's image-staged skills at `/config/skills`
 - Clears the image `opencode2` entrypoint at launch, then explicitly runs either `opencode2 --standalone` or `opencode2 serve`
 - Applies security restrictions (dropped capabilities, no-new-privileges)
