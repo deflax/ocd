@@ -65,9 +65,9 @@ Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass
 ./ocd --ocd-profile ollama -- models --refresh
 ```
 
-Available wrapper options are `--ocd-web`, `--ocd-tmux`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.
+Available wrapper options are `--ocd-web`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.
 
-Web mode always uses `opencode2 serve --hostname 0.0.0.0 --port <port>`; extra OpenCode arguments are not forwarded. `--ocd-tmux` is retained only for compatibility and fails before Docker starts because Slim pane visualization is unsupported on OpenCode v2.
+Web mode always uses `opencode2 serve --hostname 0.0.0.0 --port <port>`; extra OpenCode arguments are not forwarded.
 
 ## Cache Cleanup
 
@@ -143,7 +143,7 @@ The base OpenCode config starts the globally installed `playwright-mcp` binary w
 
 The pinned `oh-my-opencode-slim` 2.2.20 plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. The image stages Slim's bundled skills under `/config/skills`; v2 explicitly loads them with the core `skills` array while keeping the staging directory available without allowing the plugin to modify it.
 
-Slim's optional behavior is conservative: Companion and Observer are disabled and automatic orchestrator wake is disabled in the committed config. Slim still delegates bounded work to background specialists as its core orchestration model. Slim's tmux pane visualization is v1-only: `--ocd-tmux` is unavailable on OpenCode v2 and exits before Docker starts.
+Slim's optional behavior is conservative: Companion and Observer are disabled and automatic orchestrator wake is disabled in the committed config. Slim still delegates bounded work to background specialists as its core orchestration model.
 
 ### Custom Markdown Agents
 
@@ -202,7 +202,7 @@ Start `opencode2` with a browser-based UI instead of the terminal TUI:
 ./ocd --ocd-web --ocd-profile ollama         # Combine with model profiles
 ```
 
-Web mode starts with the requested port and automatically increments to the next available port if it is already in use. `--ocd-port` applies to web mode only. `--ocd-tmux` is unavailable and fails before Docker starts, including when combined with `--ocd-web`.
+Web mode starts with the requested port and automatically increments to the next available port if it is already in use. `--ocd-port` applies to web mode only.
 
 OpenCode v2's daemon-managed `serve` pairing Basic-auth credential uses the fixed username `opencode`; there is no user-configurable password environment variable. The server binds to `0.0.0.0`, so use it only on trusted networks and do not expose it publicly.
 

@@ -44,7 +44,6 @@ OCD wrapper options:
   --ocd-help             Show this help and exit
   --ocd-profile <name>   Select an oh-my-opencode-slim preset (for example: minimax, ollama)
   --ocd-web              Start OpenCode's web server instead of the terminal TUI
-  --ocd-tmux             Unsupported on OpenCode v2; exits before Docker starts
   --ocd-port <port>      Set the OpenCode web server port used by --ocd-web
   --ocd-debug            Preserve the Docker container after exit and print debug commands
 
@@ -62,7 +61,6 @@ EOF
 parse_args() {
     SLIM_PROFILE=""
     WEB_MODE=false
-    TMUX_MODE=false
     DEBUG_MODE=false
     WEB_PORT="${OCD_WEB_PORT:-4096}"
     DOCKER_ARGS=()
@@ -84,10 +82,6 @@ parse_args() {
                 ;;
             --ocd-web)
                 WEB_MODE=true
-                shift
-                ;;
-            --ocd-tmux)
-                TMUX_MODE=true
                 shift
                 ;;
             --ocd-debug)
@@ -427,11 +421,6 @@ main() {
     CONTAINER_WORKSPACE="/workspaces/${WORKSPACE_BASENAME}-${CURRENT_DIR_HASH}"
 
     parse_args "$@"
-
-    if [ "$TMUX_MODE" = true ]; then
-        echo "Error: --ocd-tmux is unavailable on OpenCode v2; Slim tmux pane visualization is v1-only."
-        exit 1
-    fi
 
     IMAGE_NAME="ocd:latest"
     CONTAINER_NAME="ocd-$(date +%Y%m%d-%H%M%S)-$$"

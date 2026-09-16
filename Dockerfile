@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     unzip \
     fzf \
-    tmux \
     ncurses-term \
     iputils-ping \
     procps \
