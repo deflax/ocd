@@ -95,7 +95,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 #    && bunx --version
 
 RUN npm install -g --prefix /usr/local \
-    opencode-ai@1.18.30 \
+    @opencode/cli@2.0.5 \
     oh-my-opencode-slim@2.2.20 \
     @playwright/mcp@latest \
     @ast-grep/cli@latest \
@@ -152,4 +152,4 @@ ENV PATH="/home/coder/.local/bin:${PATH}"
 
 USER coder
 WORKDIR /workspace
-ENTRYPOINT ["opencode"]
+ENTRYPOINT ["opencode2"]

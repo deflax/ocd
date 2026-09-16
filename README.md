@@ -18,6 +18,7 @@ a8"  o  "8a  a8"  o--""  a8"    `Y88
 ```
 
 Run OpenCode inside a Docker container with sandboxed file access and security hardening.
+The image pins OpenCode CLI v2.0.5 and invokes it as `opencode2`.
 
 ## Features
 
@@ -27,7 +28,6 @@ Run OpenCode inside a Docker container with sandboxed file access and security h
 - Security hardening (dropped capabilities, no-new-privileges)
 - Pre-installed tools: git, ripgrep, fzf, curl, Python, BasedPyright, CMake/CTest, Terraform, Terraform LS, full system `ffmpeg`/`ffprobe`, Poppler (`pdftotext`/`pdfinfo`), qpdf, OCRmyPDF, Tesseract English OCR, Playwright MCP with its matching Chromium browser runtime, Playwright's bundled ffmpeg exposed as `playwright-ffmpeg`, Node.js language servers, and more
 - [oh-my-opencode-slim](https://github.com/alvinunreal/oh-my-opencode-slim) for lean multi-agent orchestration
-- Opt-in internal tmux visualization for Slim background agents
 - Web UI mode for browser-based access
 
 ## Quick Start
@@ -36,8 +36,7 @@ Install Docker and host `jq` first. `./ocd` performs configuration merging and S
 
 1. **Build the image:** `./build`
 2. **Run the container:** `./ocd`
-3. **Or start with internal tmux:** `./ocd --ocd-tmux` → opens OpenCode inside a container tmux session
-4. **Or start in web mode:** `./ocd --ocd-web` → opens web UI at http://localhost:4096
+3. **Or start in web mode:** `./ocd --ocd-web` → starts the web UI at http://localhost:4096
 
 **Optional:** Symlink to run from anywhere:
 ```bash
@@ -58,7 +57,7 @@ Rebuild with `./build` after the Dockerfile changes so these tools are available
 
 ## OCD Options
 
-Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass through without collisions. Run `./ocd --ocd-help` to list the wrapper options. Any unrecognized argument is forwarded to OpenCode; use `--` to forward the remaining arguments literally:
+Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass through without collisions. Run `./ocd --ocd-help` to list the wrapper options. In terminal mode, unrecognized arguments are forwarded to `opencode2 --standalone`; use `--` to forward the remaining arguments literally. `--standalone` guarantees that terminal use starts a container-private server.
 
 ```bash
 ./ocd -- --help
@@ -67,6 +66,8 @@ Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass
 ```
 
 Available wrapper options are `--ocd-web`, `--ocd-tmux`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.
+
+Web mode always uses `opencode2 serve --hostname 0.0.0.0 --port <port>`; extra OpenCode arguments are not forwarded. `--ocd-tmux` is retained only for compatibility and fails before Docker starts because Slim pane visualization is unsupported on OpenCode v2.
 
 ## Cache Cleanup
 
@@ -86,26 +87,37 @@ Use `./fixsessions --dry-run` to inspect legacy OpenCode sessions that are still
 | `config/oh-my-opencode-slim.json` | Slim settings and model presets |
 | `config/oh-my-opencode-slim.local.json` | Local Slim overrides (gitignored) |
 | `config/.oh-my-opencode-slim.<container>.json` | Per-launch selected/merged Slim config (gitignored, temporary) |
-| `config/tui.json` | TUI theme/config mounted into the container |
-| `config/tmux.conf` | Internal tmux config mounted as `/home/coder/.tmux.conf` |
+| `config/cli.json` | OpenCode v2 CLI theme/config mounted into the standard global config directory |
 | `agents/*.md` | Wrapper-level custom OpenCode agents |
 | `data/` | Persistent home directory |
 
 ### Local Config Overrides
 
-Create `config/opencode.local.json` to override settings without committing:
+Create `config/opencode.local.json` to override v2 settings without committing:
 
 ```json
-{ "provider": { "apiKey": "sk-secret-key" } }
+{ "providers": { "openai": { "settings": { "apiKey": "sk-secret-key" } } } }
 ```
 
-On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. For non-Ollama profiles, this base → optional local merge is the complete OpenCode config flow.
+On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. For non-Ollama profiles, this base → optional local merge is the complete OpenCode config flow. Existing v1 local overrides must use v2 field names and shapes: `providers` instead of `provider`, `plugins` instead of `plugin`, `agents` instead of `agent`, and ordered `permissions` arrays instead of a `permission` object. Every v2 permission rule is `{ "action": "...", "resource": "...", "effect": "..." }`; rules are last-match-wins. Provider adapters use `package` and `settings`; shell rules use `shell`, and edits use `edit` rather than a separate write rule. Use `"skills": ["/config/skills"]`, `update: "disable"`, and `disabled`, not the v1 skills, update, and agent-disable fields.
 
-When `--ocd-profile ollama` is selected, `ocd` additionally merges the committed `config/opencode.ollama.json` overlay after the base and optional local config: base → optional local → Ollama overlay. The overlay applies exclusively to the Ollama profile and authoritatively sets the `agent.research.model`, `agent.hallucinator.model`, `agent.plan.model`, and `agent.build.model` values, overriding local values for those fields. A generated `opencode.merged.json` is written only when a local config or the Ollama overlay is active; the resulting config is mounted read-only into the container.
+When `--ocd-profile ollama` is selected, `ocd` additionally merges the committed `config/opencode.ollama.json` overlay after the base and optional local config: base → optional local → Ollama overlay. The overlay applies exclusively to the Ollama profile and authoritatively sets the `agents.research.model`, `agents.hallucinator.model`, `agents.plan.model`, and `agents.build.model` values, overriding local values for those fields. A generated `opencode.merged.json` is written only when a local config or the Ollama overlay is active; the resulting config is mounted read-only into the container.
 
-Create `config/oh-my-opencode-slim.local.json` to override Slim settings or add machine-specific presets. Slim objects are merged recursively and arrays are replaced, matching Slim's native project-override behavior; this lets a local file clear or replace agent skills, MCPs, and disabled-agent lists. The launcher merges the local file, validates the preset selected by `--ocd-profile`, and writes a unique temporary config for that container. The selected profile and `--ocd-tmux` mode always win over local `preset` and multiplexer values. The temporary file is removed when the launcher exits, so concurrent containers cannot overwrite each other's selection.
+Create `config/oh-my-opencode-slim.local.json` to override Slim settings or add machine-specific presets. Slim objects are merged recursively and arrays are replaced, matching Slim's native project-override behavior; this lets a local file clear or replace agent skills, MCPs, and disabled-agent lists. The launcher merges the local file, validates the preset selected by `--ocd-profile`, and writes a unique temporary config for that container. The selected profile always wins over a local `preset` value. The temporary file is removed when the launcher exits, so concurrent containers cannot overwrite each other's selection.
 
-The base `config/opencode.json` also carries shell permissions. Current defaults allow bash commands broadly while denying `git push`, `sudo`, and `su` patterns.
+The base `config/opencode.json` carries ordered v2 permission rules. Current defaults allow reads, edits, tools, and shell commands broadly; they ask before external-directory access except for `/config/skills` and `/tmp`, and deny `git push`, `sudo`, and `su` shell patterns. Because v2 uses last-match-wins, broad ask/allow rules appear before their more specific exceptions.
+
+### OpenCode v2 Global Config Discovery
+
+The launcher does not set a global XDG override or private OpenCode config environment variables. It uses v2's standard global discovery under `/home/coder/.config/opencode/` (the container's `~/.config/opencode/`) and mounts these effective assets read-only:
+
+- `opencode.json` — base or generated merged core config
+- `oh-my-opencode-slim.json` — the selected, generated Slim config
+- `cli.json` — CLI theme configuration
+- `opencode-quota/quota-toast.json` — quota plugin sidecar configuration
+- `agents/` — wrapper-level Markdown agents
+
+The Playwright MCP launch file remains mounted at `/config/playwright-mcp.json`. Slim's image-staged skills remain at `/config/skills`; the v2 core config explicitly loads that path with `"skills": ["/config/skills"]`.
 
 ### Primary Agent
 
@@ -129,30 +141,13 @@ The base OpenCode config starts the globally installed `playwright-mcp` binary w
 
 ### oh-my-opencode-slim
 
-The pinned `oh-my-opencode-slim` plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. The image stages Slim's bundled skills under `/config/skills` so they are available on first launch without allowing the plugin to modify the read-only config mount.
+The pinned `oh-my-opencode-slim` 2.2.20 plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. The image stages Slim's bundled skills under `/config/skills`; v2 explicitly loads them with the core `skills` array while keeping the staging directory available without allowing the plugin to modify it.
 
-Slim's optional behavior is conservative: Companion and Observer are disabled, automatic orchestrator wake is disabled in the committed config, and multiplexer visualization is off unless `--ocd-tmux` is requested. Wrapper generation sets the active Slim preset and multiplexer setting for each launch, so `preset` and `multiplexer` should not be set in the committed base config. Slim still delegates bounded work to background specialists as its core orchestration model.
-
-The image includes `tmux` for opt-in Slim agent visualization. The wrapper mounts `config/tmux.conf` read-only as `/home/coder/.tmux.conf`, so tmux sessions created by OpenCode use the repo config inside the container.
-
-Use `./ocd --ocd-tmux` to start OpenCode inside a visible container-internal tmux session named `opencode`. This also changes the generated Slim multiplexer setting from `none` to `tmux`. Extra OpenCode arguments are forwarded after the workspace path, and `--ocd-profile` selects a preset from the mounted Slim config:
-
-```bash
-./ocd --ocd-tmux
-./ocd --ocd-tmux --ocd-profile ollama
-```
-
-This tmux setup is intentionally internal to the container. It does not share host tmux sockets or sessions, so you can launch `./ocd --ocd-tmux` from a host tmux pane while Slim uses its own separate tmux server inside Docker. `--ocd-tmux` is for the terminal TUI and cannot be combined with `--ocd-web`. Rebuild with `./build` after changing the Dockerfile or tmux package set.
-
-When `--ocd-tmux` is used, the launcher starts OpenCode with `--port` because Slim's tmux pane integration connects to the running OpenCode server. The port defaults to `4096` and can be changed with `--ocd-port`, the same wrapper flag used by web mode.
-
-The launcher pins the container's outer `TERM` to `xterm-256color`; tmux then sets its own terminal type inside the session. This avoids broken rendering when the host uses a terminal name that is not available in Debian terminfo.
-
-For background-agent pane visualization, the launcher also exports the active tmux pane id before starting OpenCode, so Slim can resolve the caller pane and split the correct window.
+Slim's optional behavior is conservative: Companion and Observer are disabled and automatic orchestrator wake is disabled in the committed config. Slim still delegates bounded work to background specialists as its core orchestration model. Slim's tmux pane visualization is v1-only: `--ocd-tmux` is unavailable on OpenCode v2 and exits before Docker starts.
 
 ### Custom Markdown Agents
 
-Define wrapper-level custom OpenCode agents as Markdown files under `agents/`. The `ocd` launcher mounts that directory read-only to `/config/agents`, and `OPENCODE_CONFIG_DIR=/config` lets OpenCode load them alongside the JSON config.
+Define wrapper-level custom OpenCode agents as Markdown files under `agents/`. The `ocd` launcher mounts that directory read-only to `/home/coder/.config/opencode/agents`, where v2 discovers it alongside the global JSON config.
 
 Each file name becomes the agent name. For example, `agents/reviewer.md` creates an agent named `reviewer`:
 
@@ -162,14 +157,18 @@ description: Reviews changes for bugs and missing tests
 mode: subagent
 model: openai/gpt-5.5
 temperature: 0.1
-permission:
-  edit: deny
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
 ---
 Review the current changes. Focus on correctness, regressions, security issues,
 and missing verification. Report findings first, ordered by severity.
 ```
 
 Use project-level `.opencode/agents/*.md` files in the workspace for agents that should live with one project. Use this repo's `agents/*.md` for agents you want available whenever you launch through `ocd`. Avoid naming custom agents the same as built-in agents unless you intentionally want to override them.
+
+For JSON local overrides, agent definitions belong under the v2 `agents` object; Markdown front matter uses the same v2 `permissions` rule array shown above.
 
 This wrapper includes `hallucinator`, a high-temperature primary agent for speculative ideation and playful brainstorming. Use it when you want more creative, less grounded output; switch back to a grounded agent before relying on factual claims or implementation details.
 
@@ -195,7 +194,7 @@ To create a new profile, add another entry under `presets` in `config/oh-my-open
 
 ### Web Mode
 
-Start OpenCode with a browser-based UI instead of the terminal TUI:
+Start `opencode2` with a browser-based UI instead of the terminal TUI:
 
 ```bash
 ./ocd --ocd-web                              # Web UI on http://localhost:4096
@@ -203,13 +202,9 @@ Start OpenCode with a browser-based UI instead of the terminal TUI:
 ./ocd --ocd-web --ocd-profile ollama         # Combine with model profiles
 ```
 
-Web mode cannot be combined with `--ocd-tmux`; tmux mode is only for the terminal TUI. Web mode starts with the requested port and automatically increments to the next available port if it is already in use.
+Web mode starts with the requested port and automatically increments to the next available port if it is already in use. `--ocd-port` applies to web mode only. `--ocd-tmux` is unavailable and fails before Docker starts, including when combined with `--ocd-web`.
 
-**Authentication (optional):** Set `OPENCODE_SERVER_PASSWORD` to require basic auth:
-```bash
-OPENCODE_SERVER_PASSWORD=secret ./ocd --ocd-web
-```
-Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVER_USERNAME` is set.
+OpenCode v2's daemon-managed `serve` pairing Basic-auth credential uses the fixed username `opencode`; there is no user-configurable password environment variable. The server binds to `0.0.0.0`, so use it only on trusted networks and do not expose it publicly.
 
 **Environment variables:**
 
@@ -217,8 +212,6 @@ Username defaults to OpenCode's built-in `opencode` value unless `OPENCODE_SERVE
 |----------|-------------|---------|
 | `OCD_WEB_PORT` | Default web port (overridden by `--ocd-port`) | `4096` |
 | `OCD_NO_BANNER` | Suppress the interactive startup banner when set | (unset) |
-| `OPENCODE_SERVER_PASSWORD` | Basic auth password | (none — unauthenticated) |
-| `OPENCODE_SERVER_USERNAME` | Basic auth username | `opencode` |
 
 ### Debugging Container Exits
 
@@ -250,8 +243,8 @@ Remove the preserved debug container with the printed `docker rm` command when y
 │   ├── oh-my-opencode-slim.json        # Slim settings and all model presets (committed)
 │   ├── oh-my-opencode-slim.local.json  # Slim local overrides (gitignored, optional)
 │   ├── .oh-my-opencode-slim.<container>.json # Per-launch Slim config (gitignored, temporary)
-│   └── tmux.conf                   # Internal tmux config mounted to /home/coder/.tmux.conf
-├── agents/         # Markdown custom agents mounted to /config/agents
+│   └── cli.json                    # OpenCode v2 CLI theme config
+├── agents/         # Markdown custom agents mounted to ~/.config/opencode/agents
 ├── data/           # Persistent home (mounted to /home/coder)
 └── Dockerfile      # Container definition
 ```
@@ -265,13 +258,16 @@ The `ocd` script:
 - Prints a startup summary with the selected mode/profile, workspace mapping, mounted configs, display/X11 state, forwarded OpenCode args, and container command
 - Mounts the current physical directory to a deterministic `/workspaces/<basename>-<hash>` path and sets it as the container working directory so new TUI sessions scope to the mounted workspace
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
-- Mounts config files to `/config` (sets `OPENCODE_CONFIG` and `OPENCODE_CONFIG_DIR`, including `tui.json`)
-- Mounts `agents` to `/config/agents` so Markdown custom agents are available in every `ocd` session
-- Mounts `config/tmux.conf` to `/home/coder/.tmux.conf` for container-internal tmux sessions
-- Clears the image `opencode` entrypoint at launch, then explicitly runs either `opencode`, `opencode web`, or `tmux`
+- Mounts effective config assets read-only to `~/.config/opencode/` for standard OpenCode v2 discovery: core config, selected Slim config, `cli.json`, quota sidecar, and custom agents
+- Keeps Playwright's launch config at `/config/playwright-mcp.json` and Slim's image-staged skills at `/config/skills`
+- Clears the image `opencode2` entrypoint at launch, then explicitly runs either `opencode2 --standalone` or `opencode2 serve`
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 
 Old sessions are not migrated automatically. If legacy sessions appear across unrelated workspaces, run `./fixsessions --dry-run` and then `./fixsessions` to repair the old shared `global` project records.
+
+## Upgrading To OpenCode v2
+
+After pulling this migration, run `./build` to install the pinned v2.0.5 CLI, then restart `./ocd`; already-running containers keep their old executable and mounted configuration. Rename or migrate any local v1 override fields as described above before restarting. Rebuild again after Dockerfile changes; configuration, CLI theme, agent, or launcher changes require ending and restarting `./ocd` so the new read-only mounts are applied.
 
 ## Self-Hosted Model Configuration
 

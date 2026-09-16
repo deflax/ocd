@@ -36,25 +36,25 @@ hash_workspace_path() {
 
 usage() {
     cat <<'EOF'
-Usage: ocd [ocd options] [opencode args]
+Usage: ocd [ocd options] [opencode2 args]
 
 Run OpenCode inside the OCD Docker wrapper.
 
 OCD wrapper options:
   --ocd-help             Show this help and exit
   --ocd-profile <name>   Select an oh-my-opencode-slim preset (for example: minimax, ollama)
-  --ocd-web              Start OpenCode web mode instead of the terminal TUI
-  --ocd-tmux             Start OpenCode in an internal container tmux session
-  --ocd-port <port>      Set the OpenCode server/web port used by --ocd-web or --ocd-tmux
+  --ocd-web              Start OpenCode's web server instead of the terminal TUI
+  --ocd-tmux             Unsupported on OpenCode v2; exits before Docker starts
+  --ocd-port <port>      Set the OpenCode web server port used by --ocd-web
   --ocd-debug            Preserve the Docker container after exit and print debug commands
 
-Any argument not listed above is forwarded to OpenCode. Use -- to stop OCD option
-parsing and forward the remaining arguments literally.
+Any argument not listed above is forwarded to OpenCode in terminal mode.
+Web mode uses its fixed server invocation and does not forward extra arguments. Use -- to
+stop OCD option parsing and forward the remaining arguments literally.
 
 Examples:
   ./ocd --ocd-web
   ./ocd --ocd-web --ocd-port 8080
-  ./ocd --ocd-tmux --ocd-profile minimax
   ./ocd -- --help
 EOF
 }
@@ -127,7 +127,7 @@ merge_opencode_config() {
             "${SCRIPT_DIR}/config/opencode.json" \
             "$LOCAL_CONFIG" \
             > "$MERGED_CONFIG"
-        OPENCODE_CONFIG_HOST="$MERGED_CONFIG"
+        CORE_CONFIG_HOST="$MERGED_CONFIG"
     fi
 
     if [ "$SLIM_PROFILE" = "ollama" ]; then
@@ -144,7 +144,7 @@ merge_opencode_config() {
                 "$OLLAMA_OVERLAY" \
                 > "$MERGED_CONFIG"
         fi
-        OPENCODE_CONFIG_HOST="$MERGED_CONFIG"
+        CORE_CONFIG_HOST="$MERGED_CONFIG"
     fi
 }
 
@@ -153,17 +153,11 @@ print_available_profiles() {
 }
 
 prepare_slim_config() {
-    local MULTIPLEXER_TYPE
     local SLIM_CONFIG_DRAFT
     local SLIM_LOCAL_CONFIG
 
     SLIM_BASE_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode-slim.json"
     SELECTED_SLIM_PROFILE="${SLIM_PROFILE:-default}"
-    MULTIPLEXER_TYPE="none"
-    if [ "$TMUX_MODE" = true ]; then
-        MULTIPLEXER_TYPE="tmux"
-    fi
-
     SLIM_LOCAL_CONFIG="${SCRIPT_DIR}/config/oh-my-opencode-slim.local.json"
     SLIM_CONFIG_HOST="${SCRIPT_DIR}/config/.oh-my-opencode-slim.${CONTAINER_NAME}.json"
     SLIM_CONFIG_DRAFT="${SLIM_CONFIG_HOST}.tmp"
@@ -187,8 +181,7 @@ prepare_slim_config() {
 
     jq \
         --arg profile "$SELECTED_SLIM_PROFILE" \
-        --arg multiplexer "$MULTIPLEXER_TYPE" \
-        '.preset = $profile | .multiplexer.type = $multiplexer' \
+        '.preset = $profile' \
         "$SLIM_CONFIG_DRAFT" \
         > "$SLIM_CONFIG_HOST"
     rm -f "$SLIM_CONFIG_DRAFT"
@@ -278,45 +271,16 @@ port_in_use() {
 }
 
 build_opencode_cmd() {
-    if [ "$WEB_MODE" = true ] && [ "$TMUX_MODE" = true ]; then
-        echo "Error: --ocd-tmux cannot be combined with --ocd-web."
-        exit 1
-    elif [ "$WEB_MODE" = true ]; then
+    if [ "$WEB_MODE" = true ]; then
         while port_in_use "${WEB_PORT}"; do
             echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
             WEB_PORT=$((WEB_PORT + 1))
         done
 
-        OPENCODE_CMD=(opencode web --hostname 0.0.0.0 --port "${WEB_PORT}")
-
-        if [ -z "${OPENCODE_SERVER_PASSWORD:-}" ]; then
-            echo "Warning: No OPENCODE_SERVER_PASSWORD set. Web UI will be unauthenticated."
-            echo "  Set it via: OPENCODE_SERVER_PASSWORD=secret ./ocd --ocd-web"
-        fi
-    elif [ "$TMUX_MODE" = true ]; then
-        while port_in_use "${WEB_PORT}"; do
-            echo "Port ${WEB_PORT} is in use, trying $((WEB_PORT + 1))..."
-            WEB_PORT=$((WEB_PORT + 1))
-        done
-
-        printf -v TMUX_SHELL_COMMAND 'opencode --port %q %q' "${WEB_PORT}" "${CONTAINER_WORKSPACE}"
-        for arg in "$@"; do
-            printf -v QUOTED_ARG '%q' "$arg"
-            TMUX_SHELL_COMMAND+=" ${QUOTED_ARG}"
-        done
-        OPENCODE_CMD=(tmux new-session -s opencode "export TMUX_PANE=\$(tmux display-message -p '#{pane_id}'); exec ${TMUX_SHELL_COMMAND}")
+        OPENCODE_CMD=(opencode2 serve --hostname 0.0.0.0 --port "${WEB_PORT}")
+        echo "Web mode uses OpenCode v2 pairing credentials; do not expose it outside trusted networks."
     else
-        OPENCODE_CMD=(opencode "$@")
-    fi
-}
-
-build_server_env() {
-    SERVER_ENV=()
-    if [ -n "${OPENCODE_SERVER_PASSWORD:-}" ]; then
-        SERVER_ENV+=(-e OPENCODE_SERVER_PASSWORD="${OPENCODE_SERVER_PASSWORD}")
-    fi
-    if [ -n "${OPENCODE_SERVER_USERNAME:-}" ]; then
-        SERVER_ENV+=(-e OPENCODE_SERVER_USERNAME="${OPENCODE_SERVER_USERNAME}")
+        OPENCODE_CMD=(opencode2 --standalone "$@")
     fi
 }
 
@@ -391,7 +355,7 @@ EOF
 
 print_start_banner() {
     echo "Launch details:"
-    echo "  Mode: $([ "$WEB_MODE" = true ] && echo web || { [ "$TMUX_MODE" = true ] && echo tmux || echo terminal; })"
+    echo "  Mode: $([ "$WEB_MODE" = true ] && echo web || echo terminal)"
     echo "  Profile: ${SELECTED_SLIM_PROFILE}"
     echo "  Image: ${IMAGE_NAME}"
     echo "  Container: ${CONTAINER_NAME}"
@@ -415,13 +379,12 @@ run_container() {
         --network host \
         --shm-size=1g \
         -v "${SCRIPT_DIR}/data:/home/coder:rw" \
-        -v "${OPENCODE_CONFIG_HOST}:/config/opencode.json:ro" \
-        -v "${OPENCODE_QUOTA_CONFIG_HOST}:/config/opencode-quota/quota-toast.json:ro" \
+        -v "${CORE_CONFIG_HOST}:/home/coder/.config/opencode/opencode.json:ro" \
+        -v "${OPENCODE_QUOTA_CONFIG_HOST}:/home/coder/.config/opencode/opencode-quota/quota-toast.json:ro" \
         -v "${PLAYWRIGHT_MCP_CONFIG_HOST}:/config/playwright-mcp.json:ro" \
-        -v "${SLIM_CONFIG_HOST}:/config/oh-my-opencode-slim.json:ro" \
-        -v "${TUI_CONFIG_HOST}:/config/tui.json:ro" \
-        -v "${TMUX_CONFIG_HOST}:/home/coder/.tmux.conf:ro" \
-        -v "${SCRIPT_DIR}/agents:/config/agents:ro" \
+        -v "${SLIM_CONFIG_HOST}:/home/coder/.config/opencode/oh-my-opencode-slim.json:ro" \
+        -v "${CLI_CONFIG_HOST}:/home/coder/.config/opencode/cli.json:ro" \
+        -v "${SCRIPT_DIR}/agents:/home/coder/.config/opencode/agents:ro" \
         -v "${CURRENT_DIR}:${CONTAINER_WORKSPACE}:rw" \
         "${X11_MOUNT[@]}" \
         "${XAUTHORITY_ARGS[@]}" \
@@ -433,12 +396,9 @@ run_container() {
         -e LANG=C.UTF-8 \
         -e LC_ALL=C.UTF-8 \
         -e OPENCODE_API_KEY="${OPENCODE_API_KEY:-}" \
-        -e OPENCODE_CONFIG=/config/opencode.json \
-        -e OPENCODE_CONFIG_DIR=/config \
         -e OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true \
         -e OPENCODE_ENABLE_EXA=1 \
         -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \
-        "${SERVER_ENV[@]}" \
         --security-opt no-new-privileges:true \
         --cap-drop ALL \
         --cap-add CHOWN \
@@ -468,6 +428,11 @@ main() {
 
     parse_args "$@"
 
+    if [ "$TMUX_MODE" = true ]; then
+        echo "Error: --ocd-tmux is unavailable on OpenCode v2; Slim tmux pane visualization is v1-only."
+        exit 1
+    fi
+
     IMAGE_NAME="ocd:latest"
     CONTAINER_NAME="ocd-$(date +%Y%m%d-%H%M%S)-$$"
     trap cleanup EXIT INT TERM HUP
@@ -483,17 +448,16 @@ main() {
     JQ_MERGE_FILTER='def merge_arrays($a; $b): reduce $b[] as $item ($a; if index($item) == null then . + [$item] else . end); def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) elif (($a[$key] | type) == "array" and ($b[$key] | type) == "array") then merge_arrays($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
     # Slim follows its native override contract: objects merge recursively and arrays are replaced.
     SLIM_JQ_MERGE_FILTER='def deepmerge($a; $b): reduce ($b | keys_unsorted[]) as $key ($a; .[$key] = if (($a[$key] | type) == "object" and ($b[$key] | type) == "object") then deepmerge($a[$key]; $b[$key]) else $b[$key] end); deepmerge(.[0]; .[1])'
-    OPENCODE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
+    CORE_CONFIG_HOST="${SCRIPT_DIR}/config/opencode.json"
     OPENCODE_QUOTA_CONFIG_HOST="${SCRIPT_DIR}/config/opencode-quota/quota-toast.json"
     PLAYWRIGHT_MCP_CONFIG_HOST="${SCRIPT_DIR}/config/playwright-mcp.json"
-    TUI_CONFIG_HOST="${SCRIPT_DIR}/config/tui.json"
-    TMUX_CONFIG_HOST="${SCRIPT_DIR}/config/tmux.conf"
+    CLI_CONFIG_HOST="${SCRIPT_DIR}/config/cli.json"
     merge_opencode_config
 
     # oh-my-opencode-slim config: select a named preset with --ocd-profile.
     # Presets live together in config/oh-my-opencode-slim.json; local overrides
-    # are merged before the selected preset and multiplexer mode are applied.
-    # NOTE: tui.json is NOT part of the merge flow — it is read directly by OpenCode from the config dir.
+    # are merged before the selected preset is applied.
+    # NOTE: cli.json is NOT part of the merge flow — OpenCode discovers it from its standard config directory.
     prepare_slim_config
 
     ensure_opencode_project_id
@@ -502,8 +466,6 @@ main() {
     resolve_host_display
 
     build_opencode_cmd "${DOCKER_ARGS[@]}"
-    build_server_env
-
     build_rm_args
     print_banner
     print_start_banner

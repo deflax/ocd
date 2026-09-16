@@ -1,102 +1,100 @@
 {
-  "$schema": "https://opencode.ai/config.json",
-  "autoupdate": false,
+  "$schema": "https://opencode.ai/v2/config.json",
+  "update": "disable",
   "default_agent": "orchestrator",
-  "permission": {
-    "external_directory": {
-      "*": "ask",
-      "/config/skills/**": "allow",
-      "/tmp": "allow",
-      "/tmp/**": "allow"
-    },
-    "read": "allow",
-    "edit": "allow",
-    "write": "allow",
-    "glob": "allow",
-    "grep": "allow",
-    "list": "allow",
-    "lsp": "allow",
-    "todoread": "allow",
-    "todowrite": "allow",
-    "question": "allow",
-    "webfetch": "allow",
-    "bash": {
-      "*": "allow",
-      "git push *": "deny",
-      "sudo *": "deny",
-      "su *": "deny"
-    }
-  },
-  "provider": {
+  "permissions": [
+    { "action": "external_directory", "resource": "*", "effect": "ask" },
+    { "action": "external_directory", "resource": "/config/skills/**", "effect": "allow" },
+    { "action": "external_directory", "resource": "/tmp", "effect": "allow" },
+    { "action": "external_directory", "resource": "/tmp/**", "effect": "allow" },
+    { "action": "read", "resource": "*", "effect": "allow" },
+    { "action": "edit", "resource": "*", "effect": "allow" },
+    { "action": "glob", "resource": "*", "effect": "allow" },
+    { "action": "grep", "resource": "*", "effect": "allow" },
+    { "action": "list", "resource": "*", "effect": "allow" },
+    { "action": "lsp", "resource": "*", "effect": "allow" },
+    { "action": "todoread", "resource": "*", "effect": "allow" },
+    { "action": "todowrite", "resource": "*", "effect": "allow" },
+    { "action": "question", "resource": "*", "effect": "allow" },
+    { "action": "webfetch", "resource": "*", "effect": "allow" },
+    { "action": "shell", "resource": "*", "effect": "allow" },
+    { "action": "shell", "resource": "git push *", "effect": "deny" },
+    { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "su *", "effect": "deny" }
+  ],
+  "providers": {
     "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
+      "package": "aisdk:@ai-sdk/openai-compatible",
       "name": "Ollama (local)",
-      "options": {
+      "settings": {
         "baseURL": "http://localhost:11434/v1",
         "num_ctx": 16384
       },
-      "models": {   
-	"gemma4:26b-16k": {
-	  "name": "gemma4:26b-16k",
-	  "tool_call": true
-	}
+      "models": {
+        "gemma4:26b-16k": {
+          "name": "gemma4:26b-16k",
+          "tool_call": true
+        }
       }
     }
   },
   "compaction": {
     "auto": true,
-    "prune": true,
-    "reserved": 10000
+    "keep": {
+      "tokens": 10000
+    }
   },
-  "agent": {
+  "agents": {
     "plan": {
       "model": "openai/gpt-5.6-terra",
-      "disable": true
+      "disabled": true
     },
     "build": {
       "model": "openai/gpt-5.6-terra",
-      "disable": true
+      "disabled": true
     },
     "research": {
       "description": "Read-only research and analysis agent.",
       "mode": "primary",
       "model": "openai/gpt-5.6-terra",
-      "disable": false,
+      "disabled": false,
       "hidden": false,
-      "permission": {
-        "read": "allow",
-        "list": "allow",
-        "glob": "allow",
-        "grep": "allow",
-        "lsp": "allow",
-        "webfetch": "allow",
-        "websearch": "allow",
-        "edit": "deny",
-        "write": "deny",
-        "bash": "deny"
-      }
+      "permissions": [
+        { "action": "read", "resource": "*", "effect": "allow" },
+        { "action": "list", "resource": "*", "effect": "allow" },
+        { "action": "glob", "resource": "*", "effect": "allow" },
+        { "action": "grep", "resource": "*", "effect": "allow" },
+        { "action": "lsp", "resource": "*", "effect": "allow" },
+        { "action": "webfetch", "resource": "*", "effect": "allow" },
+        { "action": "websearch", "resource": "*", "effect": "allow" },
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     },
     "hallucinator": {
       "model": "openai/gpt-5.6-luna"
     }
   },
-  "plugin": [
+  "plugins": [
     "oh-my-opencode-slim@2.2.20",
     "@slkiser/opencode-quota@4.9.0"
   ],
+  "skills": ["/config/skills"],
   "mcp": {
-    "playwright": {
-      "type": "local",
-      "command": [
-        "env",
-        "-u",
-        "PLAYWRIGHT_MCP_BROWSER",
-        "playwright-mcp",
-        "--isolated",
-        "--config",
-        "/config/playwright-mcp.json"
-      ],
-      "enabled": true
+    "servers": {
+      "playwright": {
+        "type": "local",
+        "command": [
+          "env",
+          "-u",
+          "PLAYWRIGHT_MCP_BROWSER",
+          "playwright-mcp",
+          "--isolated",
+          "--config",
+          "/config/playwright-mcp.json"
+        ],
+        "disabled": false
+      }
     }
   }
 }
