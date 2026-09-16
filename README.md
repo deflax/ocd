@@ -38,6 +38,16 @@ Install Docker and host `jq` first. `./ocd` performs configuration merging and S
 2. **Run the container:** `./ocd`
 3. **Or start in web mode:** `./ocd --ocd-web` → starts the web UI at http://localhost:4096
 
+For a ChatGPT Plus/Pro subscription, start `./ocd` and use **Connect an integration → OpenAI → ChatGPT OAuth** in the TUI. OpenCode v2.0.5's standalone `auth login openai` command currently fails to find that integration, so use the TUI flow.
+
+An OpenAI API key is an optional alternative:
+
+```bash
+OPENAI_API_KEY='...' ./ocd
+```
+
+OCD forwards `OPENAI_API_KEY` only when it is set. Prefer exporting it through your shell secret manager or environment rather than placing it in configuration files.
+
 **Optional:** Symlink to run from anywhere:
 ```bash
 ln -s "$(pwd)/ocd" ~/.local/bin/ocd
@@ -57,12 +67,12 @@ Rebuild with `./build` after the Dockerfile changes so these tools are available
 
 ## OCD Options
 
-Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass through without collisions. Run `./ocd --ocd-help` to list the wrapper options. In terminal mode, unrecognized arguments are forwarded to `opencode2 --standalone`; use `--` to forward the remaining arguments literally. `--standalone` guarantees that terminal use starts a container-private server.
+Wrapper-owned options use the `--ocd-*` prefix so normal OpenCode flags can pass through without collisions. Run `./ocd --ocd-help` to list the wrapper options. In terminal mode, unrecognized arguments are forwarded with `--standalone` placed according to OpenCode v2's command syntax; use `--` to forward the remaining arguments literally. `--standalone` guarantees that terminal use starts a container-private server.
 
 ```bash
 ./ocd -- --help
 ./ocd --ocd-profile ollama -- --version
-./ocd --ocd-profile ollama -- models --refresh
+./ocd --ocd-profile ollama -- models
 ```
 
 Available wrapper options are `--ocd-web`, `--ocd-profile <name>`, `--ocd-port <port>`, `--ocd-debug`, and `--ocd-help`.

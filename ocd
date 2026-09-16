@@ -301,7 +301,28 @@ build_opencode_cmd() {
         OPENCODE_CMD=(opencode2 serve --hostname 0.0.0.0 --port "${WEB_PORT}")
         echo "Web mode uses OpenCode v2 pairing credentials; do not expose it outside trusted networks."
     else
-        OPENCODE_CMD=(opencode2 --standalone "$@")
+        case "${1:-}" in
+            auth)
+                if [ -n "${2:-}" ] && [[ "${2}" != -* ]]; then
+                    OPENCODE_CMD=(opencode2 auth "$2" "${@:3}" --standalone)
+                else
+                    OPENCODE_CMD=(opencode2 "$@")
+                fi
+                ;;
+            debug|mcp|plugin|session|service)
+                if [ -n "${2:-}" ] && [[ "${2}" != -* ]]; then
+                    OPENCODE_CMD=(opencode2 "$1" "$2" --standalone "${@:3}")
+                else
+                    OPENCODE_CMD=(opencode2 "$@")
+                fi
+                ;;
+            acp|api|models|stats|mini|run|pair|serve|upgrade|update|uninstall)
+                OPENCODE_CMD=(opencode2 "$1" --standalone "${@:2}")
+                ;;
+            *)
+                OPENCODE_CMD=(opencode2 --standalone "$@")
+                ;;
+        esac
     fi
 }
 
@@ -322,6 +343,13 @@ build_rm_args() {
     RM_ARGS=(--rm)
     if [ "$DEBUG_MODE" = true ]; then
         RM_ARGS=()
+    fi
+}
+
+build_provider_env() {
+    PROVIDER_ENV=()
+    if [ -n "${OPENAI_API_KEY:-}" ]; then
+        PROVIDER_ENV+=(-e OPENAI_API_KEY="${OPENAI_API_KEY}")
     fi
 }
 
@@ -418,6 +446,7 @@ run_container() {
         -e OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true \
         -e OPENCODE_ENABLE_EXA=1 \
         -e PLAYWRIGHT_MCP_CONFIG=/config/playwright-mcp.json \
+        "${PROVIDER_ENV[@]}" \
         --security-opt no-new-privileges:true \
         --cap-drop ALL \
         --cap-add CHOWN \
@@ -481,6 +510,7 @@ main() {
 
     build_opencode_cmd "${DOCKER_ARGS[@]}"
     build_rm_args
+    build_provider_env
     print_banner
     print_start_banner
     run_container
