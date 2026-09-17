@@ -18,7 +18,7 @@ a8"  o  "8a  a8"  o--""  a8"    `Y88
 ```
 
 Run OpenCode inside a Docker container with sandboxed file access and security hardening.
-The image pins OpenCode CLI v2.0.5 and invokes it as `opencode2`.
+The image pins OpenCode CLI and invokes it as `opencode2`.
 
 ## Features
 
@@ -38,7 +38,7 @@ Install Docker and host `jq` first. `./ocd` performs configuration merging and S
 2. **Run the container:** `./ocd`
 3. **Or start in web mode:** `./ocd --ocd-web` → starts the web UI at http://localhost:4096
 
-For a ChatGPT Plus/Pro subscription, start `./ocd` and use **Connect an integration → OpenAI → ChatGPT OAuth** in the TUI. OpenCode v2.0.5's standalone `auth login openai` command currently fails to find that integration, so use the TUI flow.
+For a ChatGPT Plus/Pro subscription, start `./ocd` and use **Connect an integration → OpenAI → ChatGPT OAuth** in the TUI. OpenCode's standalone `auth login openai` command currently fails to find that integration, so use the TUI flow.
 
 An OpenAI API key is an optional alternative:
 
