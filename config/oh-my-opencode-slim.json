@@ -38,7 +38,7 @@
         "mcps": []
       },
       "designer": {
-        "model": "openai/gpt-5.6-astra",
+        "model": "openai/gpt-6-astra",
         "variant": "medium",
         "skills": [],
         "mcps": []
