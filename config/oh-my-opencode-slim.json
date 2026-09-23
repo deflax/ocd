@@ -14,7 +14,7 @@
   "presets": {
     "default": {
       "orchestrator": {
-        "model": "openai/gpt-6-sol",
+        "model": "openai/gpt-5.6-sol",
         "variant": "medium",
         "skills": ["*"],
         "mcps": ["*", "!context7"]
@@ -26,13 +26,13 @@
         "mcps": []
       },
       "librarian": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": ["context7", "gh_grep"]
       },
       "explorer": {
-        "model": "openai/gpt-6-luna",
+        "model": "openai/gpt-5.6-luna",
         "variant": "low",
         "skills": [],
         "mcps": []
@@ -44,7 +44,7 @@
         "mcps": []
       },
       "fixer": {
-        "model": "openai/gpt-6-sol",
+        "model": "openai/gpt-5.6-sol",
         "variant": "high",
         "skills": [],
         "mcps": []
