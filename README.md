@@ -109,13 +109,13 @@ Create `config/opencode.local.json` to override v2 settings without committing:
 { "providers": { "openai": { "settings": { "apiKey": "sk-secret-key" } } } }
 ```
 
-On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. For non-Ollama profiles, this base → optional local merge is the complete OpenCode config flow. Existing v1 local overrides must use v2 field names and shapes: `providers` instead of `provider`, `plugins` instead of `plugin`, `agents` instead of `agent`, and ordered `permissions` arrays instead of a `permission` object. Every v2 permission rule is `{ "action": "...", "resource": "...", "effect": "..." }`; rules are last-match-wins. Provider adapters use `package` and `settings`; shell rules use `shell`, and edits use `edit` rather than a separate write rule. Use `"skills": ["/config/skills"]`, `update: "disable"`, and `disabled`, not the v1 skills, update, and agent-disable fields.
+On startup, `ocd` recursively merges this on top of `opencode.json` using `jq`. Objects are merged recursively, arrays are appended with duplicate entries skipped, and scalar values from the local file replace base values. For non-Ollama profiles, this base → optional local merge is the complete OpenCode config flow. Existing v1 local overrides must use v2 field names and shapes: `providers` instead of `provider`, `plugins` instead of `plugin`, `agents` instead of `agent`, and ordered `permissions` arrays instead of a `permission` object. Every v2 permission rule is `{ "action": "...", "resource": "...", "effect": "..." }`; rules are last-match-wins. Provider adapters use `package` and `settings`; shell rules use `shell`, and edits use `edit` rather than a separate write rule. Use `update: "disable"` and `disabled`, not the v1 update and agent-disable fields. Slim manages user skills under `~/.config/opencode/skills` rather than through an image-staged core skills source.
 
 When `--ocd-profile ollama` is selected, `ocd` additionally merges the committed `config/opencode.ollama.json` overlay after the base and optional local config: base → optional local → Ollama overlay. The overlay applies exclusively to the Ollama profile and authoritatively sets the `agents.research.model`, `agents.hallucinator.model`, `agents.plan.model`, and `agents.build.model` values, overriding local values for those fields. A generated `opencode.merged.json` is written only when a local config or the Ollama overlay is active; the resulting config is mounted read-only into the container.
 
 Create `config/oh-my-opencode-slim.local.json` to override Slim settings or add machine-specific presets. Slim objects are merged recursively and arrays are replaced, matching Slim's native project-override behavior; this lets a local file clear or replace agent skills, MCPs, and disabled-agent lists. The launcher merges the local file, validates the preset selected by `--ocd-profile`, and writes a unique temporary config for that container. The selected profile always wins over a local `preset` value. The temporary file is removed when the launcher exits, so concurrent containers cannot overwrite each other's selection.
 
-The base `config/opencode.json` carries ordered v2 permission rules. Current defaults allow reads, edits, tools, and shell commands broadly; they ask before external-directory access except for `/config/skills` and `/tmp`, and deny `git push`, `sudo`, and `su` shell patterns. Because v2 uses last-match-wins, broad ask/allow rules appear before their more specific exceptions.
+The base `config/opencode.json` carries ordered v2 permission rules. Current defaults allow reads, edits, tools, and shell commands broadly; they ask before external-directory access except for `/tmp`, and deny `git push`, `sudo`, and `su` shell patterns. Because v2 uses last-match-wins, broad ask/allow rules appear before their more specific exceptions.
 
 ### OpenCode v2 Global Config Discovery
 
@@ -125,7 +125,7 @@ The launcher does not set a global XDG override or private OpenCode config envir
 - `oh-my-opencode-slim.json` — the selected, generated Slim config
 - `agents/` — wrapper-level Markdown agents
 
-The Playwright MCP launch file remains mounted at `/config/playwright-mcp.json`. Slim's image-staged skills remain at `/config/skills`; the v2 core config explicitly loads that path with `"skills": ["/config/skills"]`.
+The Playwright MCP launch file remains mounted at `/config/playwright-mcp.json`. Slim manages user skills under the persistent `~/.config/opencode/skills` directory; the v2 core config does not add a separate skills source.
 
 `config/cli.json` is seeded once into the writable persistent home at `data/.config/opencode/cli.json` when that file is absent or empty. OpenCode manages it after seeding; a non-empty user-managed file is never overwritten or bind-mounted. To reset it, run `./clearcache`, which preserves sessions and authentication.
 
@@ -153,7 +153,7 @@ The base OpenCode config starts the globally installed `playwright-mcp` binary w
 
 ### oh-my-opencode-slim
 
-The pinned `oh-my-opencode-slim` 2.2.20 plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. The image stages Slim's bundled skills under `/config/skills`; v2 explicitly loads them with the core `skills` array while keeping the staging directory available without allowing the plugin to modify it.
+The pinned `oh-my-opencode-slim` 2.2.20 plugin provides a focused Orchestrator with Explorer, Oracle, Librarian, Designer, and Fixer specialists. Multi-model Council mode is not configured in OCD's lean default. Slim manages its user skills under the persistent `~/.config/opencode/skills` directory; OCD does not stage or explicitly load a duplicate image-level copy.
 
 Slim's optional behavior is conservative: Companion and Observer are disabled and automatic orchestrator wake is disabled in the committed config. Slim still delegates bounded work to background specialists as its core orchestration model.
 
@@ -274,7 +274,7 @@ The `ocd` script:
 - Seeds `.git/opencode` with a deterministic `ocd-<hash>` project id for Git repositories that do not have a first commit yet, avoiding OpenCode's shared `global` session scope
 - Mounts core config, selected Slim config, and custom agents read-only to `~/.config/opencode/` for standard OpenCode v2 discovery
 - Seeds the `cli.json` template once into writable persistent OpenCode home storage; OpenCode manages it afterward
-- Keeps Playwright's launch config at `/config/playwright-mcp.json` and Slim's image-staged skills at `/config/skills`
+- Keeps Playwright's launch config at `/config/playwright-mcp.json` and relies on Slim to manage user skills under `~/.config/opencode/skills`
 - Clears the image `opencode2` entrypoint at launch, then explicitly runs either `opencode2 --standalone` or `opencode2 serve`
 - Applies security restrictions (dropped capabilities, no-new-privileges)
 

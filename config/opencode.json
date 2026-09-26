@@ -4,7 +4,6 @@
   "default_agent": "orchestrator",
   "permissions": [
     { "action": "external_directory", "resource": "*", "effect": "ask" },
-    { "action": "external_directory", "resource": "/config/skills/**", "effect": "allow" },
     { "action": "external_directory", "resource": "/tmp", "effect": "allow" },
     { "action": "external_directory", "resource": "/tmp/**", "effect": "allow" },
     { "action": "read", "resource": "*", "effect": "allow" },
@@ -78,7 +77,6 @@
   "plugins": [
     "oh-my-opencode-slim@2.2.20"
   ],
-  "skills": ["/config/skills"],
   "mcp": {
     "servers": {
       "playwright": {

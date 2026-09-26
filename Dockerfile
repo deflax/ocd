@@ -104,10 +104,9 @@ RUN npm install -g --prefix /usr/local \
     typescript@latest \
     typescript-language-server@latest
 
-RUN mkdir -p /config/skills /config/.oh-my-opencode-slim \
-    && cp -R /usr/local/lib/node_modules/oh-my-opencode-slim/src/skills/. /config/skills/ \
+RUN mkdir -p /config/.oh-my-opencode-slim \
     && chmod a+rx /config \
-    && chmod -R a+rwX /config/skills /config/.oh-my-opencode-slim
+    && chmod -R a+rwX /config/.oh-my-opencode-slim
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
