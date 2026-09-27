@@ -16,7 +16,7 @@
       "orchestrator": {
         "model": "openai/gpt-5.6-sol",
         "variant": "medium",
-        "skills": ["*", "!deepwork", "!verification-planning", "!worktrees"],
+        "skills": ["*", "!deepwork", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
@@ -53,7 +53,7 @@
     "ollama": {
       "orchestrator": {
         "model": "ollama/gemma4:26b-16k",
-        "skills": ["*", "!deepwork", "!verification-planning", "!worktrees"],
+        "skills": ["*", "!deepwork", "!worktrees"],
         "mcps": ["*", "!context7"]
       },
       "oracle": {
