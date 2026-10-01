@@ -55,7 +55,7 @@
     "research": {
       "description": "Read-only research and analysis agent.",
       "mode": "primary",
-      "model": "openai/gpt-5.6-terra",
+      "model": "openai/gpt-6.1-sol",
       "disabled": false,
       "hidden": false,
       "permissions": [
@@ -71,7 +71,7 @@
       ]
     },
     "hallucinator": {
-      "model": "openai/gpt-5.6-luna"
+      "model": "openai/gpt-6-luna"
     }
   },
   "plugins": [
