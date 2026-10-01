@@ -416,7 +416,6 @@ print_start_banner() {
     if [ "$WEB_MODE" = true ]; then
         echo "  Web hostname: ${WEB_HOSTNAME}"
     fi
-    echo "  Profile: ${SELECTED_SLIM_PROFILE}"
     echo "  Image: ${IMAGE_NAME}"
     echo "  Container: ${CONTAINER_NAME}"
     echo "  Display: ${HOST_DISPLAY:-<unset>}"
@@ -427,6 +426,7 @@ print_start_banner() {
     echo "  Container workspace: ${CONTAINER_WORKSPACE}"
     echo "  Forwarded OpenCode args: $([ "${#DOCKER_ARGS[@]}" -gt 0 ] && shell_join "${DOCKER_ARGS[@]}" || echo '<none>')"
     echo "  Container command: $(shell_join "${OPENCODE_CMD[@]}")"
+    echo "  OMO-Slim profile: ${SELECTED_SLIM_PROFILE}"
 }
 
 run_container() {
