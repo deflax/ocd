@@ -207,7 +207,6 @@ prepare_slim_config() {
         "$SLIM_CONFIG_DRAFT" \
         > "$SLIM_CONFIG_HOST"
     rm -f "$SLIM_CONFIG_DRAFT"
-    echo "Using oh-my-opencode-slim preset: ${SELECTED_SLIM_PROFILE}"
 }
 
 ensure_opencode_project_id() {
